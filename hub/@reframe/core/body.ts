@@ -9,6 +9,18 @@ export type Body<
   json(): Promise<T>;
 };
 
+export type BodyPromise<
+  H extends Record<string, string> = Record<string, string>,
+  T = unknown,
+> =
+  & Promise<Body<H, T>>
+  & Pick<Body<H, T>, "text" | "json">
+  & {
+    response: () => Promise<Response>;
+    header<K extends keyof H>(key: K): Promise<H[K]>;
+    headers: Promise<H>;
+  };
+
 export const text = <
   H extends Record<string, string> = Record<string, string>,
   T = unknown,
@@ -69,4 +81,19 @@ export const response = <
     text: async () => response.text(),
     json: async () => response.json(),
   };
+};
+
+export const createBodyPromise = <
+  H extends Record<string, string> = Record<string, string>,
+  T = unknown,
+>(
+  body: Promise<Body<H, T>>,
+): BodyPromise<H, T> => {
+  return Object.assign(body, {
+    response: () => body.then((b) => b.response()),
+    text: () => body.then((b) => b.text()),
+    json: () => body.then((b) => b.json()),
+    header: <K extends keyof H>(key: K) => body.then((b) => b.header(key)),
+    headers: body.then((b) => b.headers),
+  });
 };
