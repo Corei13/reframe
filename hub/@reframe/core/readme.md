@@ -1,0 +1,9 @@
+As the first step, we will create two hooks with following structure:
+
+- @reframe/core
+  - server.ts -- a server that can serve an entry
+  - main.ts -- a cli that accepts a path in the format
+    @org/name/path/to/entry.ts and can run the server
+
+- @gates/zero
+  - main.js, a js file that exports a server and does not have any imports
