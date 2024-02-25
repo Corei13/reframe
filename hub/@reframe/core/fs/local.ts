@@ -1,12 +1,12 @@
-import { BaseCtx } from "../ctx/base.ts";
+import { Base } from "../ctx/ctx.ts";
 import { getContentType } from "../utils/content-type.ts";
 import { cleanPath } from "../utils/path.ts";
-import { createFs } from "./fs.ts";
+import { createFs } from "./lib/create.ts";
 import { ensureDir } from "https://deno.land/std@0.188.0/fs/ensure_dir.ts";
 import { dirname } from "https://deno.land/std@0.188.0/path/mod.ts";
 
-export const localFs = <Ctx extends BaseCtx>(prefix: `/${string}`) => {
-  return createFs<Ctx>("local")
+export const localFs = <C extends Base>(prefix: `/${string}`) => {
+  return createFs<C>("local")
     .read(async (ctx) => {
       const content = Deno.readTextFileSync(
         Deno.cwd() + cleanPath(prefix + ctx.path),
