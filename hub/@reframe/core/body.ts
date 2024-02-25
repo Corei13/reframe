@@ -2,6 +2,7 @@ export type Body<
   H extends Record<string, string> = Record<string, string>,
   T = unknown,
 > = {
+  underlying: BodyInit | null;
   headers: H;
   header<K extends keyof H>(key: K): H[K];
   response(): Response;
@@ -18,7 +19,7 @@ export type BodyPromise<
   & {
     response: () => Promise<Response>;
     header<K extends keyof H>(key: K): Promise<H[K]>;
-    headers: Promise<H>;
+    headers: () => Promise<H>;
   };
 
 export const text = <
@@ -29,6 +30,7 @@ export const text = <
   headers: H,
 ): Body<H, T> => {
   return {
+    underlying: content,
     headers,
     header: (key) => headers[key],
     response: () =>
@@ -51,6 +53,7 @@ export const json = <
   headers: H,
 ): Body<H, T> => {
   return {
+    underlying: JSON.stringify(content),
     headers,
     header: (key) => headers[key],
     response: () =>
@@ -75,11 +78,12 @@ export const response = <
   const response = new Response(body, { headers });
 
   return {
+    underlying: body,
     headers,
     header: (key) => headers[key],
     response: () => response,
-    text: async () => response.text(),
-    json: async () => response.json(),
+    text: () => response.text(),
+    json: () => response.json(),
   };
 };
 
@@ -89,11 +93,14 @@ export const createBodyPromise = <
 >(
   body: Promise<Body<H, T>>,
 ): BodyPromise<H, T> => {
-  return Object.assign(body, {
-    response: () => body.then((b) => b.response()),
-    text: () => body.then((b) => b.text()),
-    json: () => body.then((b) => b.json()),
-    header: <K extends keyof H>(key: K) => body.then((b) => b.header(key)),
-    headers: body.then((b) => b.headers),
-  });
+  return Object.assign(
+    body,
+    {
+      response: () => body.then((b) => b.response()),
+      text: () => body.then((b) => b.text()),
+      json: () => body.then((b) => b.json()),
+      header: <K extends keyof H>(key: K) => body.then((b) => b.header(key)),
+      headers: () => body.then((b) => b.headers),
+    },
+  );
 };

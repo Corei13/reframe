@@ -1,7 +1,7 @@
 import { createVisitorTransformer, ts } from "./system.ts";
 
 const normalizeSpecifier = (specifier: string, path: string) => {
-  return "experimental:" + specifier;
+  return specifier;
 };
 
 export const extractExports = (node: ts.Node): string[] => {

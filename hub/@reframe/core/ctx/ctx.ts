@@ -1,8 +1,9 @@
+import { createRuntime, type Runtime } from "../runtime.ts";
 import type { Body, BodyPromise } from "../body.ts";
 import { createLogger } from "../log/log.ts";
-import { createBodyPromise, json, response, text } from "../body.ts";
-import { cleanPath, splitPath } from "../utils/path.ts";
 import { FSError } from "../fs/lib/error.ts";
+import { cleanPath, splitPath } from "../utils/path.ts";
+import { createBodyPromise, json, response, text } from "../body.ts";
 
 export type Base = {
   request: Request;
@@ -29,9 +30,11 @@ export type Ctx<
   C extends Base,
   H extends Record<string, string> = Record<string, string>,
 > = C & {
-  fs: FS<C>;
+  fs: FSClient;
+  runtime: (entry: string) => Runtime;
   create: (request: Request, fs?: FS<C>) => Ctx<C>;
   cd: (path: string | ((_: string) => string)) => Ctx<C>;
+  switch: (fs: FS<C>) => Ctx<C>;
   forward(
     fs: FS<C>,
     headers?: (headers: H) => H,
@@ -40,13 +43,22 @@ export type Ctx<
 
 export type BaseCtx = Ctx<Base>;
 
+export type FSClient = {
+  name: string;
+  fetch: (request: Request) => Promise<Response>;
+  read: (path: string, headers?: Record<string, string>) => BodyPromise;
+  write: (
+    path: string,
+    body: Body,
+    headers?: Record<string, string>,
+  ) => BodyPromise;
+};
+
 export type FS<C extends Base> = {
   name: string;
   read: (ctx: Ctx<C>) => BodyPromise;
   write: (ctx: Ctx<C>) => BodyPromise;
-  use: (_: (request: Request, fs: FS<C>) => Ctx<C>) => {
-    fetch: (request: Request) => Promise<Response>;
-  };
+  use: (_: (request: Request, fs: FS<C>) => Ctx<C>) => FSClient;
 };
 
 export const extendCreator = <C extends Base>(
@@ -57,8 +69,10 @@ export const extendCreator = <C extends Base>(
 
     const ctx: Ctx<C> = {
       ...base,
-      fs,
+      fs: fs.use(extended),
+      runtime: (entry: string) => createRuntime(entry, ctx),
       create: (request, anotherFs) => extended(request, anotherFs ?? fs),
+      switch: (fs) => extended(request, fs),
       cd: (path: string | ((_: string) => string)) => {
         const newPath = cleanPath(
           typeof path === "function" ? path(base.path) : path,
@@ -71,19 +85,20 @@ export const extendCreator = <C extends Base>(
       },
       forward: (fs, headers) => {
         const resource = ctx.operation === "read"
-          ? fs.read(ctx)
-          : fs.write(ctx);
+          ? fs.read(ctx.create(ctx.request, fs))
+          : fs.write(ctx.create(ctx.request, fs));
 
         return createBodyPromise(
-          resource.then((body) =>
-            response(
-              body.response().body,
-              {
-                ...body.headers,
-                ...headers?.(body.headers),
-              },
-            )
-          ),
+          resource
+            .then((body) =>
+              response(
+                body.response().body,
+                {
+                  ...body.headers,
+                  ...headers?.(body.headers),
+                },
+              )
+            ),
         );
       },
     };

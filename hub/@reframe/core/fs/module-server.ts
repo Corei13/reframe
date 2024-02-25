@@ -6,7 +6,7 @@ export const moduleServerFs = <C extends Base>(
   entry: string,
 ): FS<C> => {
   const serve = async (ctx: Ctx<C>) => {
-    const content = await base.read(ctx.cd(entry)).text();
+    const content = await ctx.cd(entry).forward(base).text();
 
     const importUrl = URL.createObjectURL(
       new Blob([content], { type: "text/javascript" }),
@@ -20,12 +20,9 @@ export const moduleServerFs = <C extends Base>(
 
     URL.revokeObjectURL(importUrl);
 
-    const module = await moduleFn.default({
-      // todo: implement
-      importMany: async () => {
-        return {};
-      },
-    });
+    const module = await moduleFn.default(
+      ctx.switch(base).runtime(entry),
+    );
 
     const result = await module.default(ctx.request);
 
@@ -36,11 +33,7 @@ export const moduleServerFs = <C extends Base>(
     throw ctx.badRequest("expected a response, got: " + JSON.stringify(result));
   };
 
-  return createFs<C>("server")
-    .read(async (ctx) => {
-      return await serve(ctx);
-    })
-    .write(async (ctx) => {
-      return await serve(ctx);
-    });
+  return createFs<C>("module-server")
+    .read(serve)
+    .write(serve);
 };
