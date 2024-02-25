@@ -1,9 +1,8 @@
 import { createRuntime, type Runtime } from "../runtime.ts";
 import type { Body, BodyPromise } from "../body.ts";
-import { createLogger } from "../log/log.ts";
 import { FSError } from "../fs/lib/error.ts";
-import { cleanPath, splitPath } from "../utils/path.ts";
-import { createBodyPromise, json, response, text } from "../body.ts";
+import { cleanPath } from "../utils/path.ts";
+import { json, response, text } from "../body.ts";
 
 export type Base = {
   request: Request;
@@ -13,10 +12,11 @@ export type Base = {
   segments: string[];
 
   body: Body | null;
+  getBody: () => Body;
 
-  text: typeof text;
-  json: typeof json;
-  response: typeof response;
+  text: typeof text<Record<string, string>>;
+  json: typeof json<Record<string, string>>;
+  response: typeof response<Record<string, string>>;
 
   badRequest: (message?: string) => FSError;
   notFound: (message?: string) => FSError;
@@ -35,6 +35,18 @@ export type Ctx<
   create: (request: Request, fs?: FS<C>) => Ctx<C>;
   cd: (path: string | ((_: string) => string)) => Ctx<C>;
   switch: (fs: FS<C>) => Ctx<C>;
+
+  read(
+    fs: FS<C>,
+    headers?: (headers: H) => H,
+  ): BodyPromise<H>;
+
+  write(
+    fs: FS<C>,
+    body: Body,
+    headers?: (headers: H) => H,
+  ): BodyPromise<H>;
+
   forward(
     fs: FS<C>,
     headers?: (headers: H) => H,
@@ -83,23 +95,38 @@ export const extendCreator = <C extends Base>(
           fs,
         );
       },
+
+      read: (fs, headers) => {
+        const resource = fs.read(ctx.create(
+          new Request(ctx.request.url, {
+            ...ctx.request,
+            method: "GET",
+          }),
+          fs,
+        ));
+
+        return headers ? resource.setHeaders(headers) : resource;
+      },
+
+      write: (fs, body, headers) => {
+        const resource = fs.write(ctx.create(
+          new Request(ctx.request.url, {
+            ...ctx.request,
+            method: "POST",
+            body: body.underlying,
+          }),
+          fs,
+        ));
+
+        return headers ? resource.setHeaders(headers) : resource;
+      },
+
       forward: (fs, headers) => {
         const resource = ctx.operation === "read"
           ? fs.read(ctx.create(ctx.request, fs))
           : fs.write(ctx.create(ctx.request, fs));
 
-        return createBodyPromise(
-          resource
-            .then((body) =>
-              response(
-                body.response().body,
-                {
-                  ...body.headers,
-                  ...headers?.(body.headers),
-                },
-              )
-            ),
-        );
+        return headers ? resource.setHeaders(headers) : resource;
       },
     };
 
@@ -108,64 +135,3 @@ export const extendCreator = <C extends Base>(
 
   return extended;
 };
-
-export const createBaseCtx = extendCreator<Base>((
-  request,
-  fs,
-) => {
-  const url = new URL(request.url);
-
-  const segments = splitPath(url.pathname);
-  const path = cleanPath(url.pathname) + url.search;
-
-  const operation = ["GET", "HEAD"].includes(request.method) ? "read" : "write";
-
-  return {
-    request,
-    operation,
-
-    path,
-    segments,
-
-    body: request.body &&
-      response(request.body, Object.fromEntries(request.headers)),
-
-    text,
-    json,
-    response,
-
-    notFound: (message) =>
-      FSError.notFound(
-        message ??
-          `resource not found: ${path}`,
-      ),
-
-    notImplemented: (message) =>
-      FSError.notImplemented(
-        message ?? `${operation.toUpperCase()} ${path} not implemented`,
-      ),
-
-    badRequest: (message) =>
-      FSError.badRequest(
-        message ??
-          `bad request: ${operation.toUpperCase()} ${path}`,
-      ),
-
-    notAllowed: (message) =>
-      FSError.notAllowed(
-        message ??
-          `not allowed: ${operation.toUpperCase()} ${path}`,
-      ),
-
-    log: createLogger((log) => (...args) =>
-      log(
-        operation.toUpperCase(),
-        `[${fs.name}]`,
-        ...args,
-        `(${
-          path.length <= 40 ? path : path.slice(0, 20) + "..." + path.slice(-20)
-        })`,
-      )
-    ),
-  };
-});

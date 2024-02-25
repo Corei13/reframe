@@ -5,24 +5,34 @@ import { Base, extendCreator } from "./ctx.ts";
 import { FSError } from "../fs/lib/error.ts";
 
 export const createBaseCtx = extendCreator<Base>((
-  request: Request,
+  request,
+  fs,
 ) => {
   const url = new URL(request.url);
 
   const segments = splitPath(url.pathname);
   const path = cleanPath(url.pathname) + url.search;
+  const body = request.body &&
+    response(request.body, Object.fromEntries(request.headers));
 
   const operation = ["GET", "HEAD"].includes(request.method) ? "read" : "write";
 
-  return {
+  const ctx: Base = {
     request,
     operation,
 
     path,
     segments,
 
-    body: request.body &&
-      response(request.body, Object.fromEntries(request.headers)),
+    body,
+
+    getBody: () => {
+      if (!body) {
+        throw ctx.badRequest("write is missing body");
+      }
+
+      return body;
+    },
 
     text,
     json,
@@ -54,7 +64,7 @@ export const createBaseCtx = extendCreator<Base>((
     log: createLogger((log) => (...args) =>
       log(
         operation.toUpperCase(),
-        `[${name}]`,
+        `[${fs.name}]`,
         ...args,
         `(${
           path.length <= 40 ? path : path.slice(0, 20) + "..." + path.slice(-20)
@@ -62,4 +72,6 @@ export const createBaseCtx = extendCreator<Base>((
       )
     ),
   };
+
+  return ctx;
 });
