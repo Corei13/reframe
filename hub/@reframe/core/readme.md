@@ -1,59 +1,20 @@
-In this step, we have created two new fs implementations,
+In this step, we pass @gates/two, which contains multiple typescript files that
+can import from each other. The most significant change here is to introduce
+runtime to ctx, which can import modules and evaluate them while maintaining
+referential integrity.
 
-- routerFs, which can route requests to different fs implementations
-- unmoduleFs, which takes an fs with esm modules, and transforms them into js
-  files that convert import/export statements into a function.
+### Runtime
 
-### unmoduleFs
+Runtime has three primary function, `resolve`, `import` and `importMany`.
 
-Here's an example of how unmodule transformer transforms an esm module into a js
-file.
+- `resolve` takes a path and returns the normalized path where app FS will give
+  us its content
+- `import` takes a path, fetches the content and evaluates it
+- `importMany` takes multiple paths, calls `import` on each of them and returns
+  the result as an object. Example:
 
 ```ts
-// /path/to/module.ts
-import Foo, { bar as baz, foo } from "./foo.ts";
-import * as Bar from "./bar.ts";
-
-export { Bar, baz, Foo, foo };
-
-export const qux = 42;
-
-export default function () {
-  console.log("Hello, world!");
-}
+const imports = await Runtime.importMany("react", "./math.ts");
+const { useState } = imports["react"];
+const { add, subtract } = imports["./math.ts"];
 ```
-
-```js
-export default async (Reframe) => {
-  const imports = await Reframe.importMany(
-    "./foo.ts",
-    "./bar.ts",
-  );
-  let exports = {};
-
-  const { default: Foo, foo, bar: baz } = imports["./foo.ts"];
-  const Bar = imports["./bar.ts"];
-
-  exports["Foo"] = Foo;
-  exports["foo"] = foo;
-  exports["baz"] = baz;
-  exports["Bar"] = Bar;
-
-  const qux = 42;
-  exports["qux"] = qux;
-
-  exports["default"] = function () {
-    console.log("Hello, world!");
-  };
-};
-```
-
-There are a few more details in the actual implementation (like, instead of
-`imports`, `exports` or `Reframe`, we use random variable names to avoid
-conflicts), but this is the basic idea.
-
-Why?
-
-Because we want to be able to control loading and caching of modules, and hence
-instead of using the native `import` and `export` statements, we use a function
-that can be called to load and cache modules.
