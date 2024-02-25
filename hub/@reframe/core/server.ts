@@ -1,12 +1,10 @@
-import { createBaseCtx } from "./ctx/ctx.ts";
+import { Base, FS } from "./ctx/ctx.ts";
+import { createBaseCtx } from "./ctx/base.ts";
 import { localFs } from "./fs/local.ts";
 import { moduleServerFs } from "./fs/module-server.ts";
+import { npmFs } from "./fs/npm.ts";
 import { routerFs } from "./fs/router.ts";
 import { unmoduleFs } from "./fs/unmodule.ts";
-
-const f = async () => {
-  throw 42;
-};
 
 export default function serve(
   org: string,
@@ -16,9 +14,10 @@ export default function serve(
 ) {
   const codeFs = localFs(`/@${org}/${name}`);
 
-  const sourceFs = routerFs()
+  const sourceFs: FS<Base> = routerFs()
     .mount("/", () => codeFs)
-    .mount("/@", () => unmoduleFs(codeFs));
+    .mount("/~@", () => unmoduleFs(sourceFs))
+    .mount("/~npm", () => npmFs());
 
   const appFs = routerFs()
     .mount("/", () =>

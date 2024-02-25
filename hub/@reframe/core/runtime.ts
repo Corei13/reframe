@@ -1,4 +1,5 @@
 import { Base, Ctx } from "./ctx/ctx.ts";
+import { resolve } from "./utils/path.ts";
 
 type Module<T, U> = { default: T } & U;
 
@@ -18,42 +19,16 @@ export type Runtime = {
 export const createRuntime = <C extends Base>(
   entry: string,
   ctx: Ctx<C>,
+  moduleCache: Map<string, Promise<Module<unknown, unknown>>> = new Map(),
 ): Runtime => {
   const Runtime = {
     entry,
 
-    enter: (entry: string) => ({
-      ...Runtime,
-      entry,
-    }),
+    moduleCache,
 
-    moduleCache: new Map<string, Promise<Module<unknown, unknown>>>(),
+    enter: (entry: string) => createRuntime(entry, ctx, moduleCache),
 
-    resolve: (specifier: string, referrer: string) => {
-      if (specifier.startsWith(".")) {
-        // get the absolute path compared to the current file
-        const segments = referrer.split("/").filter(Boolean);
-        segments.pop(); // remove the file name
-
-        const specifierSegments = specifier.split("/").filter(Boolean);
-
-        for (const segment of specifierSegments) {
-          if (segment === "..") {
-            if (segments.length === 0) {
-              throw new Error(`Invalid specifier: ${specifier}`);
-            }
-
-            segments.pop();
-          } else if (segment !== ".") {
-            segments.push(segment);
-          }
-        }
-
-        return "/" + segments.join("/");
-      }
-
-      return specifier;
-    },
+    resolve,
 
     _import: async (
       specifier: string,
@@ -80,22 +55,23 @@ export const createRuntime = <C extends Base>(
       const resolved = Runtime.resolve(specifier, entry);
 
       if (!Runtime.moduleCache.has(resolved)) {
-        console.log(`%cIMPORT`, "color:salmon;", resolved, "MISS");
+        console.log(`%cIMPORT`, resolved, "MISS", "color:salmon;");
 
         Runtime.moduleCache.set(
           resolved,
           Runtime._import(resolved).then((module) => {
-            // TODO: this is a hack - figure wtf this works
-
-            return {
-              ...module,
+            return Object.assign(module, {
+              // TODO: this is a hack - figure wtf this works
               __esModule: true,
-            };
+              __meta: {
+                specifier,
+                resolved,
+                referrer: entry,
+              },
+            });
           }),
         );
       }
-
-      console.log("IMPORT", resolved, "HIT");
 
       return Runtime.moduleCache.get(resolved)! as Promise<M>;
     },
@@ -109,8 +85,6 @@ export const createRuntime = <C extends Base>(
             [specifier, await Runtime.import(specifier)] as const,
         ),
       );
-
-      console.log("IMPORT MANY", Runtime.moduleCache);
 
       return Object.fromEntries(modules);
     },
