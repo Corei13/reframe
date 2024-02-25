@@ -1,12 +1,16 @@
-In this step, we pass @gates/four, which is same as @gates/three, but for this
-gate, we need to be able to cache read computations - like transpilation or
-fetching from npm - so that we don't repeat any computation.
+In this step, we pass @gates/five, which allows us to import other hooks, in
+this case, from @gates/three, @gates/four and even @reframe/core itself.
 
-For this, we create two new fs, cacheFs and memoryFs.
+Additionally, we will also support the ability to import from own hook by
+absolute path, instead of only relative path.
 
-- cacheFs(storage, source)
-  - takes two fs, storage and source, and caches each read from source to
-    storage.
-- memoryFs
-  - a simple in-memory fs to use as the storage for cacheFs, although note that
-    any compatible fs can be used as storage since FSes are composable.
+This is a big step, as it allows hooks to compose on each other, and also allows
+us to start building a library of hooks that we can import from.
+
+```ts
+// this will import from another hook
+import hook from "@org/hook/path/to/module.ts";
+
+// this will import from own hook
+import hook from "@/path/to/module.ts";
+```
