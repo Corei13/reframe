@@ -5,6 +5,8 @@ import { moduleServerFs } from "./fs/module-server.ts";
 import { npmFs } from "./fs/npm.ts";
 import { routerFs } from "./fs/router.ts";
 import { unmoduleFs } from "./fs/unmodule.ts";
+import { cacheFs } from "./fs/cache.ts";
+import { memoryFs } from "./fs/memory.ts";
 
 export default function serve(
   org: string,
@@ -14,10 +16,13 @@ export default function serve(
 ) {
   const codeFs = localFs(`/@${org}/${name}`);
 
-  const sourceFs: FS<Base> = routerFs()
-    .mount("/", () => codeFs)
-    .mount("/~@", () => unmoduleFs(sourceFs))
-    .mount("/~npm", () => npmFs());
+  const sourceFs: FS<Base> = cacheFs(
+    routerFs()
+      .mount("/", () => codeFs)
+      .mount("/~@", () => unmoduleFs(sourceFs))
+      .mount("/~npm", () => npmFs()),
+    memoryFs({}),
+  );
 
   const appFs = routerFs()
     .mount("/", () =>
