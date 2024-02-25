@@ -1,16 +1,21 @@
-In this step, we pass @gates/five, which allows us to import other hooks, in
-this case, from @gates/three, @gates/four and even @reframe/core itself.
+In this step, we pass @gates/six, where we can render react server components
+exported from hooks.
 
-Additionally, we will also support the ability to import from own hook by
-absolute path, instead of only relative path.
+To do that, we created a new library hook `@reframe/react` that exports a
+`render` function from `server.ts`, which converts a react element into a
+Response.
 
-This is a big step, as it allows hooks to compose on each other, and also allows
-us to start building a library of hooks that we can import from.
+```tsx
+import { render } from "@reframe/react/server.ts";
 
-```ts
-// this will import from another hook
-import hook from "@org/hook/path/to/module.ts";
-
-// this will import from own hook
-import hook from "@/path/to/module.ts";
+export default function (request: Request) {
+  return render(<div>Hello, world!</div>);
+}
 ```
+
+In addition, we created two new fs,
+
+- `httpFs`, reads remote urls
+- `debugFs`, evals a module and responds with the stringified result
+  - in future, we can expand this with `replFs`, which will allow us to interact
+    with a module in a repl-like environment with websockets

@@ -7,6 +7,8 @@ import { routerFs } from "./fs/router.ts";
 import { unmoduleFs } from "./fs/unmodule.ts";
 import { cacheFs } from "./fs/cache.ts";
 import { memoryFs } from "./fs/memory.ts";
+import { debugFs } from "./fs/debug.ts";
+import { httpFs } from "./fs/http.ts";
 
 export default function serve(
   org: string,
@@ -24,7 +26,9 @@ export default function serve(
       // our app
       .mount("/@", () => codeFs)
       .mount("/~@", () => unmoduleFs(sourceFs))
-      .mount("/~npm", () => npmFs()),
+      .mount("/~npm", () => npmFs())
+      .mount("/~http", () => httpFs(false))
+      .mount("/~https", () => httpFs()),
     memoryFs({}),
   );
 
@@ -34,7 +38,8 @@ export default function serve(
         sourceFs,
         entry,
       ))
-    .mount("/~", () => sourceFs);
+    .mount("/~", () => sourceFs)
+    .mount("/:", () => debugFs(unmoduleFs(sourceFs)));
 
   const server = appFs.use(createBaseCtx);
 

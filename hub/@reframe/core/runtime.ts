@@ -1,7 +1,13 @@
 import { Base, Ctx } from "./ctx/ctx.ts";
 import { resolve } from "./utils/path.ts";
 
-type Module<T, U> = { default: T } & U;
+type Module<T, U> = { default: T } & U & {
+  __meta?: {
+    specifier: string;
+    resolved: string;
+    referrer: string[];
+  };
+};
 
 export type Runtime = {
   entry: string;
@@ -28,7 +34,14 @@ export const createRuntime = <C extends Base>(
 
     enter: (entry: string) => createRuntime(entry, ctx, moduleCache),
 
-    resolve,
+    resolve: (specifier: string, referrer: string) => {
+      // TODO: this is a hack, should be fixed with import maps
+      if (specifier === "react" || specifier === "react-dom") {
+        return resolve(specifier + "@canary", referrer);
+      }
+
+      return resolve(specifier, referrer);
+    },
 
     _import: async (
       specifier: string,
@@ -39,6 +52,7 @@ export const createRuntime = <C extends Base>(
         const url = URL.createObjectURL(
           new Blob([body], { type: "application/javascript" }),
         );
+
         const module = await import(url);
         URL.revokeObjectURL(url);
 
@@ -55,7 +69,14 @@ export const createRuntime = <C extends Base>(
       const resolved = Runtime.resolve(specifier, entry);
 
       if (!Runtime.moduleCache.has(resolved)) {
-        console.log(`%cIMPORT`, "color:salmon;", resolved, "MISS");
+        console.log(
+          `%cIMPORT`,
+          "color:salmon;",
+          resolved,
+          specifier,
+          entry,
+          "MISS",
+        );
 
         Runtime.moduleCache.set(
           resolved,
@@ -66,7 +87,7 @@ export const createRuntime = <C extends Base>(
               __meta: {
                 specifier,
                 resolved,
-                referrer: entry,
+                referrer: [entry].concat(module.__meta?.referrer || []),
               },
             });
           }),
