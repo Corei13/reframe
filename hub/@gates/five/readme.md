@@ -1,5 +1,10 @@
-In this step, we pass @gates/five, which allows us to import other hooks, in
-this case, from @gates/three, @gates/four and even @reframe/core itself.
+```sh
+$ cd hub
+$ ./@reframe/core/main.ts dev serve @gates/five/~@/@/main.ts
+```
+
+In this step, we pass `@gates/five`, which allows us to import other hooks, in
+this case, from `@gates/three`, `@gates/four` and even `@reframe/core` itself.
 
 Additionally, we will also support the ability to import from own hook by
 absolute path, instead of only relative path.

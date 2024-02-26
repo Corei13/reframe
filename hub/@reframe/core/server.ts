@@ -14,11 +14,15 @@ export default function serve(
   _version: string,
   entry: string,
 ) {
+  const hooksFs = localFs(`/`);
   const codeFs = localFs(`/@${org}/${name}`);
 
   const sourceFs: FS<Base> = cacheFs(
     routerFs()
-      .mount("/", () => codeFs)
+      // all hooks
+      .mount("/", () => hooksFs)
+      // our app
+      .mount("/@", () => codeFs)
       .mount("/~@", () => unmoduleFs(sourceFs))
       .mount("/~npm", () => npmFs()),
     memoryFs({}),
