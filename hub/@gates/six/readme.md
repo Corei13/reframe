@@ -1,4 +1,9 @@
-In this step, we pass @gates/six, where we can render react server components
+```sh
+$ cd hub
+$ ./@reframe/core/main.ts dev serve @gates/six/~@/@/main.tsx
+```
+
+In this step, we pass `@gates/six`, where we can render react server components
 exported from hooks.
 
 To do that, we created a new library hook `@reframe/react` that exports a

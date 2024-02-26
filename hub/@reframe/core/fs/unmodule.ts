@@ -13,6 +13,7 @@ export const unmoduleFs = <C extends Base>(base: FS<C>) =>
       return ctx.text(transpiled, {
         ...response.headers,
         "x-fs-transpiler-imports": imports.join(","),
+        "content-type": "application/javascript",
       });
     }).write((ctx) => {
       throw ctx.notImplemented();
