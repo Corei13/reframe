@@ -55,7 +55,7 @@ export const createRuntime = <C extends Base>(
       const resolved = Runtime.resolve(specifier, entry);
 
       if (!Runtime.moduleCache.has(resolved)) {
-        console.log(`%cIMPORT`, resolved, "MISS", "color:salmon;");
+        console.log(`%cIMPORT`, "color:salmon;", resolved, "MISS");
 
         Runtime.moduleCache.set(
           resolved,
