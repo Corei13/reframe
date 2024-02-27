@@ -1,3 +1,8 @@
+```sh
+$ cd hub
+$ ./@reframe/core/main.ts dev serve @gates/three/~@/main.ts
+```
+
 In this step, we pass @gates/three, which contains imports from npm. For this,
 we create a new fs, npmFs, which resolves npm packages from esm.sh.
 
@@ -6,11 +11,11 @@ import paths.
 
 An absolute path can have the following forms:
 
-- /path/to/file
-- loader:/path/to/file
-- loader1:loader2:/path/to/file
-- /~loader/path/to/file (equivalent to loader:/path/to/file)
-- /~loader1/~loader2/path/to/file (equivalent to loader1:loader2:/path/to/file)
+- `/path/to/file`
+- `loader:/path/to/file`
+- `loader1:loader2:/path/to/file`
+- `/~loader/path/to/file (equivalent to loader:/path/to/file)`
+- `/~loader1/~loader2/path/to/file (equivalent to loader1:loader2:/path/to/file)`
 
 Path resolution works on resolving the loader part and the file part separately.
 Some examples:

@@ -128,8 +128,6 @@ export const unmodule = createVisitorTransformer<{
                 ),
               );
             });
-
-            // {symbol.exports}[<name>] = <property>;
           }
 
           if (!ts.isStringLiteral(statement.moduleSpecifier)) {
@@ -142,6 +140,8 @@ export const unmodule = createVisitorTransformer<{
             statement.moduleSpecifier.text,
             ctx.path,
           );
+
+          imports[specifier] ??= {};
 
           if (!statement.exportClause) {
             return ts.factory.createExpressionStatement(
@@ -164,8 +164,6 @@ export const unmodule = createVisitorTransformer<{
               ),
             );
           }
-
-          imports[specifier] ??= {};
 
           if (ts.isNamespaceExport(statement.exportClause)) {
             imports[specifier][statement.exportClause.name.text] = "*";
