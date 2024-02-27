@@ -1,3 +1,8 @@
+```sh
+$ cd hub
+$ ./@reframe/core/main.ts dev serve @gates/two/@/main.ts
+```
+
 In this step, we pass @gates/two, which contains multiple typescript files that
 can import from each other. The most significant change here is to introduce
 runtime to ctx, which can import modules and evaluate them while maintaining
