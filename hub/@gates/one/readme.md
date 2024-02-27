@@ -1,4 +1,9 @@
-In this step, we have created two new fs implementations,
+```sh
+$ cd hub
+$ ./@reframe/core/main.ts dev serve @gates/one/@/main.ts
+```
+
+In this step, we create two new fs implementations,
 
 - routerFs, which can route requests to different fs implementations
 - unmoduleFs, which takes an fs with esm modules, and transforms them into js

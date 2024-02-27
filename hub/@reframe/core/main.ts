@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --unstable-kv --watch
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --allow-sys --unstable-kv --watch
 
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 import serve from "./server.ts";
