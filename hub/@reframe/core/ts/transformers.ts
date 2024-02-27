@@ -1,6 +1,6 @@
 import { createVisitorTransformer, ts } from "./system.ts";
 
-const normalizeSpecifier = (specifier: string, path: string) => {
+const normalizeSpecifier = (specifier: string, _path: string) => {
   return specifier;
 };
 
@@ -79,6 +79,10 @@ export const extractExports = (node: ts.Node): string[] => {
 export const unmodule = createVisitorTransformer<{
   path: string;
   imports: string[];
+  exports: {
+    names: string[];
+    namespaces: string[];
+  };
   symbols: {
     reframe: string;
     imports: string;
@@ -91,7 +95,10 @@ export const unmodule = createVisitorTransformer<{
       const imports: Record<string, Record<string, string>> = {};
 
       const statements = node.statements.flatMap((statement) => {
+        // export default <expression>
         if (ts.isExportAssignment(statement)) {
+          ctx.exports.names.push("default");
+
           return ts.factory.createExpressionStatement(
             ts.factory.createAssignment(
               ts.factory.createElementAccessExpression(
@@ -103,6 +110,7 @@ export const unmodule = createVisitorTransformer<{
           );
         }
 
+        // export { <property> as <name> }
         if (ts.isExportDeclaration(statement)) {
           if (!statement.moduleSpecifier) {
             if (
@@ -114,6 +122,8 @@ export const unmodule = createVisitorTransformer<{
             }
 
             return statement.exportClause.elements.map((element) => {
+              ctx.exports.names.push(element.name.text);
+
               return ts.factory.createExpressionStatement(
                 ts.factory.createAssignment(
                   ts.factory.createElementAccessExpression(
@@ -143,20 +153,25 @@ export const unmodule = createVisitorTransformer<{
 
           imports[specifier] ??= {};
 
+          // export * from "<specifier>"
           if (!statement.exportClause) {
+            ctx.exports.namespaces.push(specifier);
+
             return ts.factory.createExpressionStatement(
               ts.factory.createAssignment(
                 ts.factory.createIdentifier(ctx.symbols.exports),
                 ts.factory.createObjectLiteralExpression(
                   [
                     ts.factory.createSpreadAssignment(
-                      ts.factory.createIdentifier(ctx.symbols.exports),
-                    ),
-                    ts.factory.createSpreadAssignment(
                       ts.factory.createElementAccessExpression(
                         ts.factory.createIdentifier(ctx.symbols.imports),
                         ts.factory.createStringLiteral(specifier),
                       ),
+                    ),
+
+                    // if a name was already set, that takes precedence
+                    ts.factory.createSpreadAssignment(
+                      ts.factory.createIdentifier(ctx.symbols.exports),
                     ),
                   ],
                   true,
@@ -165,8 +180,10 @@ export const unmodule = createVisitorTransformer<{
             );
           }
 
+          // export * as <name> from "<specifier>"
           if (ts.isNamespaceExport(statement.exportClause)) {
             imports[specifier][statement.exportClause.name.text] = "*";
+            ctx.exports.names.push(statement.exportClause.name.text);
 
             return ts.factory.createExpressionStatement(
               ts.factory.createAssignment(
@@ -183,6 +200,13 @@ export const unmodule = createVisitorTransformer<{
               ),
             );
           } else {
+            // export { <property> as <name> } from "<specifier>"
+            ctx.exports.names.push(
+              ...statement.exportClause.elements.map((element) =>
+                element.name.text
+              ),
+            );
+
             return ts.factory.createForOfStatement(
               undefined,
               ts.factory.createVariableDeclarationList(
@@ -271,12 +295,14 @@ export const unmodule = createVisitorTransformer<{
           return [];
         }
 
+        // import * as <name> from "<specifier>"
         if (ts.isNamespaceImport(bindings)) {
           imports[specifier][bindings.name.text] = "*";
 
           return [];
         }
 
+        // import { <property> as <name> } from "<specifier>"
         for (const element of bindings.elements) {
           imports[specifier][element.name.text] = element.propertyName?.text ??
             element.name.text;
@@ -331,6 +357,8 @@ export const unmodule = createVisitorTransformer<{
 
       ctx.imports.push(...Object.keys(imports));
 
+      const hasImports = importStatementParts.length > 0;
+
       return ts.factory.updateSourceFile(
         node,
         [
@@ -344,7 +372,7 @@ export const unmodule = createVisitorTransformer<{
                 ts.ModifierFlags.Async,
               ),
               undefined,
-              [
+              !hasImports ? [] : [
                 ts.factory.createParameterDeclaration(
                   undefined,
                   undefined,
@@ -355,33 +383,44 @@ export const unmodule = createVisitorTransformer<{
               undefined,
               ts.factory.createBlock(
                 [
-                  ts.factory.createVariableStatement(
-                    [],
-                    ts.factory.createVariableDeclarationList(
-                      [
-                        ts.factory.createVariableDeclaration(
-                          ts.factory.createIdentifier(ctx.symbols.imports),
-                          undefined,
-                          undefined,
-                          ts.factory.createAwaitExpression(
-                            ts.factory.createCallExpression(
-                              ts.factory.createPropertyAccessExpression(
-                                ts.factory.createIdentifier(
-                                  ctx.symbols.reframe,
+                  ts.factory.createExpressionStatement(
+                    ts.factory.createAssignment(
+                      ts.factory.createPropertyAccessExpression(
+                        ts.factory.createIdentifier("import.meta"),
+                        ts.factory.createIdentifier("path"),
+                      ),
+                      ts.factory.createStringLiteral(ctx.path),
+                    ),
+                  ),
+                  !hasImports
+                    ? ts.factory.createEmptyStatement()
+                    : ts.factory.createVariableStatement(
+                      [],
+                      ts.factory.createVariableDeclarationList(
+                        [
+                          ts.factory.createVariableDeclaration(
+                            ts.factory.createIdentifier(ctx.symbols.imports),
+                            undefined,
+                            undefined,
+                            ts.factory.createAwaitExpression(
+                              ts.factory.createCallExpression(
+                                ts.factory.createPropertyAccessExpression(
+                                  ts.factory.createIdentifier(
+                                    ctx.symbols.reframe,
+                                  ),
+                                  ts.factory.createIdentifier("importMany"),
                                 ),
-                                ts.factory.createIdentifier("importMany"),
-                              ),
-                              undefined,
-                              importStatementParts.map(([specifier]) =>
-                                specifier
+                                undefined,
+                                importStatementParts.map(([specifier]) =>
+                                  specifier
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                      ts.NodeFlags.Const,
+                        ],
+                        ts.NodeFlags.Const,
+                      ),
                     ),
-                  ),
                   ts.factory.createVariableStatement(
                     [],
                     ts.factory.createVariableDeclarationList(
@@ -476,6 +515,8 @@ export const unmodule = createVisitorTransformer<{
       node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
     ) {
       const exports = extractExports(node);
+      ctx.exports.names.push(...exports);
+
       return [
         ts.factory.createVariableStatement(
           node.modifiers?.filter((m) =>
@@ -505,6 +546,14 @@ export const unmodule = createVisitorTransformer<{
     ) {
       const name = node.name ??
         ts.factory.createIdentifier(ctx.symbols.generate("fn"));
+
+      const exportName = node.modifiers
+          ?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)
+        ? "default"
+        : name.text;
+
+      ctx.exports.names.push(exportName);
+
       return [
         ts.factory.createFunctionDeclaration(
           node.modifiers?.filter((m) =>
@@ -524,11 +573,7 @@ export const unmodule = createVisitorTransformer<{
             ts.factory.createElementAccessExpression(
               ts.factory.createIdentifier(ctx.symbols.exports),
               ts.factory.createStringLiteral(
-                node.modifiers?.some((m) =>
-                    m.kind === ts.SyntaxKind.DefaultKeyword
-                  )
-                  ? "default"
-                  : name.text,
+                exportName,
               ),
             ),
             name,
@@ -543,6 +588,14 @@ export const unmodule = createVisitorTransformer<{
     ) {
       const name = node.name ??
         ts.factory.createIdentifier(ctx.symbols.generate("fn"));
+
+      const exportName = node.modifiers
+          ?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)
+        ? "default"
+        : name.text;
+
+      ctx.exports.names.push(exportName);
+
       return [
         ts.factory.createClassDeclaration(
           node.modifiers?.filter((m) =>
@@ -559,13 +612,7 @@ export const unmodule = createVisitorTransformer<{
           ts.factory.createAssignment(
             ts.factory.createElementAccessExpression(
               ts.factory.createIdentifier(ctx.symbols.exports),
-              ts.factory.createStringLiteral(
-                node.modifiers?.some((m) =>
-                    m.kind === ts.SyntaxKind.DefaultKeyword
-                  )
-                  ? "default"
-                  : name.text,
-              ),
+              ts.factory.createStringLiteral(exportName),
             ),
             name,
           ),

@@ -12,6 +12,8 @@ export const createFs = <C extends Base>(name: string, opts?: {
 
       const fs: FS<C> = {
         name,
+        base,
+
         read: fsRead,
         write: fsWrite,
 

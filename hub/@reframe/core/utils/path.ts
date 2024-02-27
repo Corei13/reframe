@@ -1,15 +1,20 @@
+const reduceDotDot = (path: string[]): string[] => {
+  return path.reduce((slice, p) => {
+    if (p === ".." && slice.length > 0 && slice[slice.length - 1] !== "..") {
+      slice.pop();
+    } else {
+      slice.push(p);
+    }
+    return slice;
+  }, [] as Array<string>);
+};
+
 export function splitPath(path: string): string[] {
-  return path
-    .split(/[\/\\]+/g)
-    .filter((p) => p !== "" && p !== ".")
-    .reduce((slice, p) => {
-      if (p === "..") {
-        slice.pop();
-      } else {
-        slice.push(p);
-      }
-      return slice;
-    }, [] as Array<string>);
+  return reduceDotDot(
+    path
+      .split(/[\/\\]+/g)
+      .filter((p) => p !== "" && p !== "."),
+  );
 }
 
 export function cleanPath(path: string): string {
@@ -44,15 +49,10 @@ export const joinSpecifier = (
 export const mergeSpecifiers = (a: string, b: string) => {
   const mergeLoaders = (a: string[], b: string[]): string[] => {
     if (b[0] === "/") {
-      return b.slice(1);
+      return reduceDotDot(b.slice(1));
     }
 
-    while (b[0] === "..") {
-      a.pop();
-      b.shift();
-    }
-
-    return [...a, ...b];
+    return reduceDotDot([...a, ...b]);
   };
 
   const mergeSegments = (a: string[], b: string[]): string[] => {
@@ -98,6 +98,16 @@ export const absolute = (specifier: string): string => {
   );
 };
 
-export const resolve = (specifier: string, referrer: string): string => {
-  return absolute(mergeSpecifiers(referrer, specifier));
+export const resolvePath = (specifier: string, referrer: string): string => {
+  if (specifier === "@") {
+    return "@";
+  }
+  // TODO: this is a hack, should be fixed with import maps
+  if (specifier === "react" || specifier === "react-dom") {
+    return resolvePath(specifier + "@canary", referrer);
+  }
+
+  const resolved = absolute(mergeSpecifiers(referrer, specifier));
+
+  return resolved;
 };

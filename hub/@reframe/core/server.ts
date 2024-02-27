@@ -9,6 +9,23 @@ import { cacheFs } from "./fs/cache.ts";
 import { memoryFs } from "./fs/memory.ts";
 import { debugFs } from "./fs/debug.ts";
 import { httpFs } from "./fs/http.ts";
+import { createFs } from "./fs/lib/create.ts";
+import { reactClientFs } from "./fs/react/client.ts";
+
+const withHeaders = <C extends Base>(fs: FS<C>) =>
+  createFs<C>(`withHeaders<${fs.name}>`)
+    .read(async (ctx) => {
+      const b = await ctx.forward(fs);
+      const content = [
+        ...Object.entries(b.headers).map(([k, v]) =>
+          `// ${k}: ${JSON.stringify(v)}`
+        ),
+        "",
+        "",
+        await b.text(),
+      ].join("\n");
+      return ctx.text(content, b.headers);
+    }).write((ctx) => ctx.forward(fs));
 
 export default function serve(
   org: string,
@@ -28,7 +45,9 @@ export default function serve(
       .mount("/~@", () => unmoduleFs(sourceFs))
       .mount("/~npm", () => npmFs())
       .mount("/~http", () => httpFs(false))
-      .mount("/~https", () => httpFs()),
+      .mount("/~https", () => httpFs())
+      .mount("/~react-client", () => reactClientFs(sourceFs)),
+    // localFs(`/.cache/v${_version}`),
     memoryFs({}),
   );
 
@@ -38,8 +57,8 @@ export default function serve(
         sourceFs,
         entry,
       ))
-    .mount("/~", () => sourceFs)
-    .mount("/:", () => debugFs(unmoduleFs(sourceFs)));
+    .mount("/~", () => withHeaders(sourceFs))
+    .mount("/=", () => debugFs(unmoduleFs(sourceFs)));
 
   const server = appFs.use(createBaseCtx);
 

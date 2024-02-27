@@ -4,7 +4,7 @@ export type Body<
 > = {
   underlying: BodyInit | null;
   headers: H;
-  header<K extends keyof H>(key: K): H[K];
+  header<K extends keyof H>(key: K): H[K] | undefined;
   setHeader<K extends keyof H>(key: K, value: H[K]): Body<H, T>;
   setHeaders(
     headers: H | ((headers: H) => H),
@@ -12,7 +12,7 @@ export type Body<
 
   response(): Response;
   text(): Promise<string>;
-  json(): Promise<T>;
+  json(pretty?: boolean): Promise<T>;
 
   clone(): Body<H, T>;
 };
@@ -25,7 +25,10 @@ export type BodyPromise<
   & Pick<Body<H, T>, "text" | "json">
   & {
     response: () => Promise<Response>;
-    header<K extends keyof H>(key: K): Promise<H[K]>;
+    header<K extends keyof H>(key: K): Promise<
+      | H[K]
+      | undefined
+    >;
     headers: () => Promise<H>;
     setHeader<K extends keyof H>(key: K, value: H[K]): BodyPromise<H, T>;
     setHeaders(
@@ -53,7 +56,10 @@ const createBody = <H extends Record<string, string>, T>(
     header: (key) => headers[key],
 
     text: () => response.text(),
-    json: () => response.json(),
+    json: (pretty) =>
+      !pretty
+        ? response.json()
+        : response.text().then((t) => JSON.stringify(JSON.parse(t), null, 2)),
 
     setHeader: (key, value) =>
       createBody<H, T>(
@@ -128,7 +134,7 @@ export const createBodyPromise = <
     {
       response: () => body.then((b) => b.response()),
       text: () => body.then((b) => b.text()),
-      json: () => body.then((b) => b.json()),
+      json: (pretty?: boolean) => body.then((b) => b.json(pretty)),
       header: <K extends keyof H>(key: K) => body.then((b) => b.header(key)),
       headers: () => body.then((b) => b.headers),
       setHeader: <K extends keyof H>(key: K, value: H[K]) =>

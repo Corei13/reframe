@@ -1,5 +1,4 @@
 import { Base } from "../ctx/ctx.ts";
-import { getContentType } from "../utils/content-type.ts";
 import { createFs } from "./lib/create.ts";
 
 export const memoryFs = <C extends Base>(contents: Record<string, string>) =>
@@ -13,7 +12,6 @@ export const memoryFs = <C extends Base>(contents: Record<string, string>) =>
 
       return ctx.text(content, {
         "x-import-path": ctx.path,
-        "content-type": getContentType(ctx.path),
       });
     }).write(
       async (ctx) => {
@@ -21,7 +19,6 @@ export const memoryFs = <C extends Base>(contents: Record<string, string>) =>
 
         return ctx.text(contents[ctx.path], {
           "x-import-path": ctx.path,
-          "content-type": getContentType(ctx.path),
         });
       },
     );

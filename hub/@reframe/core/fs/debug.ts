@@ -30,11 +30,12 @@ export const debugFs = <C extends Base>(
 
       URL.revokeObjectURL(importUrl);
 
+      const runtime = ctx.switch(base).runtime(ctx.path);
       const module = await moduleFn.default(
-        ctx.switch(base).runtime(ctx.path),
+        runtime,
       );
 
-      console.log(">>> module", module);
+      console.log(">>> module", ctx.path, module);
 
       return ctx.text(serialize(module), {
         "content-type": "application/json",
