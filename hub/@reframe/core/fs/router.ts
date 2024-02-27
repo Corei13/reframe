@@ -45,8 +45,9 @@ export const routerFs = <C extends Base>(
 
       return ctx
         .cd(newPath)
-        .forward(route, (headers) => ({
-          "x-fs-router": key + " -> " + (headers["x-fs-router"] ?? "*"),
+        .forward(route)
+        .setHeaders((headers) => ({
+          "x-fs-router": key + " -> " + (headers["x-fs-router"] ?? newPath),
           "x-fs-router-path": ctx.path,
         }));
     }).write(
@@ -63,9 +64,10 @@ export const routerFs = <C extends Base>(
 
         return ctx
           .cd(newPath)
-          .forward(route, (headers) => ({
+          .forward(route)
+          .setHeaders((headers) => ({
             "x-fs-router": key +
-              " -> " + (headers["x-fs-router"] ?? "*"),
+              " -> " + (headers["x-fs-router"] ?? newPath),
             "x-fs-router-path": ctx.path,
           }));
       },

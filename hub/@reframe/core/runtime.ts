@@ -1,66 +1,99 @@
-import { Base, Ctx } from "./ctx/ctx.ts";
-import { resolve } from "./utils/path.ts";
+import type { BodyPromise } from "./body.ts";
+import type { Base, Ctx } from "./ctx/ctx.ts";
+import { resolvePath } from "./utils/path.ts";
 
-type Module<T, U> = { default: T } & U & {
-  __meta?: {
-    specifier: string;
-    resolved: string;
-    referrer: string[];
-  };
-};
+type Module<T, U> = { default: T } & U;
 
-export type Runtime = {
+export type Runtime<C extends Base = Base> = {
+  ctx: Ctx<C>;
   entry: string;
-  enter: (entry: string) => Runtime;
-  moduleCache: Map<string, Promise<Module<unknown, unknown>>>;
+  enter: (entry: string) => Runtime<C>;
+  switch: (ctx: Ctx<C>) => Runtime<C>;
+  cache: {
+    module: Map<string, Promise<Module<unknown, unknown>>>;
+    hydrated: Set<string>;
+  };
   resolve: (specifier: string, referrer: string) => string;
+  read: (specifier: string) => BodyPromise;
   import: <M extends Module<unknown, unknown>>(
     specifier: string,
   ) => Promise<M>;
   importMany: (
     ...imports: string[]
   ) => Promise<Record<string, Module<unknown, unknown>>>;
+  hydrate: {
+    server: {
+      getOnce: (specifier: string) => null | BodyPromise;
+      get: (specifier: string) => BodyPromise;
+      has: (specifier: string) => boolean;
+    };
+  };
 };
 
 export const createRuntime = <C extends Base>(
   entry: string,
   ctx: Ctx<C>,
-  moduleCache: Map<string, Promise<Module<unknown, unknown>>> = new Map(),
-): Runtime => {
-  const Runtime = {
+  cache: {
+    module: Map<string, Promise<Module<unknown, unknown>>>;
+    hydrated: Set<string>;
+  } = {
+    module: new Map(),
+    hydrated: new Set(),
+  },
+): Runtime<C> => {
+  const _import = async (
+    specifier: string,
+  ): Promise<Module<unknown, unknown>> => {
+    if (specifier === "@") {
+      return { default: Runtime };
+    }
+
+    const body = await Runtime.read(specifier);
+
+    try {
+      const url = URL.createObjectURL(
+        new Blob([await body.text()], { type: "application/javascript" }),
+      );
+
+      const moduleFn = await import(url);
+      URL.revokeObjectURL(url);
+
+      return await moduleFn.default(Runtime.enter(specifier));
+    } catch (error) {
+      console.error("import error", specifier, error);
+      throw error;
+    }
+  };
+
+  const Runtime: Runtime<C> = {
+    ctx,
+
     entry,
 
-    moduleCache,
+    cache,
 
-    enter: (entry: string) => createRuntime(entry, ctx, moduleCache),
+    enter: (entry: string) => createRuntime(entry, ctx, cache),
+    switch: (ctx: Ctx<C>) => createRuntime(entry, ctx, cache),
 
-    resolve: (specifier: string, referrer: string) => {
-      // TODO: this is a hack, should be fixed with import maps
-      if (specifier === "react" || specifier === "react-dom") {
-        return resolve(specifier + "@canary", referrer);
-      }
+    resolve: resolvePath,
 
-      return resolve(specifier, referrer);
-    },
+    read: (specifier: string) => ctx.fs.read(specifier),
 
-    _import: async (
-      specifier: string,
-    ): Promise<Module<unknown, unknown>> => {
-      const body = await ctx.fs.read(specifier).text();
+    hydrate: {
+      server: {
+        getOnce: (specifier: string) => {
+          if (Runtime.cache.hydrated.has(specifier)) {
+            return null;
+          }
 
-      try {
-        const url = URL.createObjectURL(
-          new Blob([body], { type: "application/javascript" }),
-        );
-
-        const module = await import(url);
-        URL.revokeObjectURL(url);
-
-        return module.default(Runtime.enter(specifier));
-      } catch (error) {
-        console.error("import error", specifier, error);
-        throw error;
-      }
+          return Runtime.hydrate.server.get(specifier);
+        },
+        get: (specifier: string) => {
+          Runtime.cache.hydrated.add(specifier);
+          return Runtime.read(specifier);
+        },
+        has: (specifier: string) => Runtime.cache.hydrated.has(specifier),
+      },
     },
 
     import: <M extends Module<unknown, unknown>>(
@@ -68,19 +101,21 @@ export const createRuntime = <C extends Base>(
     ): Promise<M> => {
       const resolved = Runtime.resolve(specifier, entry);
 
-      if (!Runtime.moduleCache.has(resolved)) {
+      if (!Runtime.cache.module.has(resolved)) {
         console.log(
           `%cIMPORT`,
           "color:salmon;",
-          resolved,
           specifier,
+          "FROM",
           entry,
+          "=>",
+          resolved,
           "MISS",
         );
 
-        Runtime.moduleCache.set(
+        Runtime.cache.module.set(
           resolved,
-          Runtime._import(resolved).then((module) => {
+          _import(resolved).then((module) => {
             return Object.assign(module, {
               // TODO: this is a hack - figure wtf this works
               __esModule: true,
@@ -94,7 +129,7 @@ export const createRuntime = <C extends Base>(
         );
       }
 
-      return Runtime.moduleCache.get(resolved)! as Promise<M>;
+      return Runtime.cache.module.get(resolved)! as Promise<M>;
     },
 
     importMany: async (...imports: string[]) => {

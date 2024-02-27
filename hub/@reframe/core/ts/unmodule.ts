@@ -26,13 +26,17 @@ const gensym = (prefix: string) =>
   `${prefix}_${Math.random().toString(36).slice(2)}`;
 
 export const unmodule = (path: string, content: string) => {
-  const imports: string[] = [];
-  const exports: string[] = [];
+  const imports = [] as string[];
+  const exports = {
+    names: [] as string[],
+    namespaces: [] as string[],
+  };
 
   const transpiler = createTranspiler({
     after: [transformers.unmodule((sourceFile) => ({
       path: sourceFile.fileName,
       imports,
+      exports,
       symbols: {
         reframe: gensym("reframe"),
         imports: gensym("imports"),

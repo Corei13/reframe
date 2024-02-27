@@ -8,19 +8,44 @@ export const cacheFs = <C extends Base>(
   return createFs<C>("cache")
     .read(async (ctx) => {
       try {
-        const body = await ctx.forward(cache);
+        const [body, headers] = await Promise.all([
+          ctx
+            .cd((path) => path + "/.content")
+            .forward(cache),
+          ctx
+            .cd((path) => path + "/.headers")
+            .forward(cache),
+        ]);
+
         ctx.log("HIT", ctx.path);
-        return body;
+        return body.setHeaders(await headers.json() as Record<string, string>);
       } catch (_error) {
         ctx.log("MISS", ctx.path);
         const body = await ctx.forward(source);
-        await ctx.write(cache, body.clone());
+
+        await Promise.all([
+          ctx
+            .cd((path) => path + "/.content")
+            .write(cache, body.clone()),
+          ctx
+            .cd((path) => path + "/.headers")
+            .write(cache, ctx.json(body.headers, {})),
+        ]);
+
         return body;
       }
     })
     .write(async (ctx) => {
-      const result = await source.write(ctx);
-      await cache.write(ctx);
+      const result = await ctx.forward(source);
+
+      await Promise.all([
+        ctx
+          .cd((path) => path + "/.content")
+          .write(cache, result),
+        ctx
+          .cd((path) => path + "/.headers")
+          .write(cache, ctx.json(result.headers, {})),
+      ]);
       return result;
     });
 };

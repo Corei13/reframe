@@ -31,7 +31,7 @@ export type Ctx<
   H extends Record<string, string> = Record<string, string>,
 > = C & {
   fs: FSClient;
-  runtime: (entry: string) => Runtime;
+  runtime: (entry: string) => Runtime<C>;
   create: (request: Request, fs?: FS<C>) => Ctx<C>;
   cd: (path: string | ((_: string) => string)) => Ctx<C>;
   switch: (fs: FS<C>) => Ctx<C>;
@@ -68,6 +68,7 @@ export type FSClient = {
 
 export type FS<C extends Base> = {
   name: string;
+  base: string;
   read: (ctx: Ctx<C>) => BodyPromise;
   write: (ctx: Ctx<C>) => BodyPromise;
   use: (_: (request: Request, fs: FS<C>) => Ctx<C>) => FSClient;
@@ -91,42 +92,57 @@ export const extendCreator = <C extends Base>(
         );
 
         return extended(
-          new Request(new URL(newPath, request.url).toString(), request),
+          new Request(
+            new URL(
+              newPath,
+              fs.base,
+            )
+              .toString(),
+            request,
+          ),
           fs,
         );
       },
 
-      read: (fs, headers) => {
-        const resource = fs.read(ctx.create(
+      read: (fs, headersFn) => {
+        const headers = {
+          ...Object.fromEntries(ctx.request.headers.entries()),
+        };
+
+        return fs.read(ctx.create(
           new Request(ctx.request.url, {
             ...ctx.request,
+            headers: headersFn?.(headers),
             method: "GET",
           }),
           fs,
         ));
-
-        return headers ? resource.setHeaders(headers) : resource;
       },
 
-      write: (fs, body, headers) => {
-        const resource = fs.write(ctx.create(
+      write: (fs, body, headersFn) => {
+        const headers = {
+          ...Object.fromEntries(ctx.request.headers.entries()),
+          ...body.headers,
+        };
+
+        return fs.write(ctx.create(
           new Request(ctx.request.url, {
             ...ctx.request,
             method: "POST",
             body: body.underlying,
+            headers: {
+              ...body.headers,
+              ...headersFn?.(headers),
+            },
           }),
           fs,
         ));
-
-        return headers ? resource.setHeaders(headers) : resource;
       },
 
-      forward: (fs, headers) => {
-        const resource = ctx.operation === "read"
+      forward: (fs) => {
+        return ctx.operation === "read"
           ? fs.read(ctx.create(ctx.request, fs))
           : fs.write(ctx.create(ctx.request, fs));
-
-        return headers ? resource.setHeaders(headers) : resource;
       },
     };
 

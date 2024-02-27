@@ -11,6 +11,94 @@
 - point in time code snapshot
 - point in time data snapshot
 
+### Eight?
+
+In this step, we pass @gates/sever, where we can render react client components.
+For this, we create `reactClientFs`, which transforms exported react component
+from a source file into another component that not only renders the original
+component in the server, but also embed the code for it to be able to used in
+the browser.
+
+For example, if the original source was
+
+```tsx
+// path/to/components.ts
+export const A = (props) => <div>{...}</div>
+export const B = (props) => <div>{...}</div>
+```
+
+then the transform would be
+
+```tsx
+// react-client:/path/to/components.ts
+import * as components from "..:/path/to/components.ts";
+export const A = createSlot(A);
+export const B = createSlot(B);
+```
+
+Where the `createSlot` function looks something like,
+
+```tsx
+import Runtime from "@";
+
+export async function Module(
+  { specifier }: { specifier: string; },
+) {
+  if (Runtime.hydrate.bundle.includes(specifier))
+    return null;
+  }
+
+  const response = await Runtime.source(specifier);
+
+  const imports =
+    response.headers.get("x-fs-unmodule-imports")?
+      .split(",").filter((s) => s.length > 0) ?? [];
+
+  return (
+    <>
+      {imports.map((specifier) => <Module specifier={specifier} load={load} />)}
+      <script
+        type={"reframe/module"}
+        {...Object.fromEntries(
+          Array.from(response.headers.entries())
+            .filter(([key]) => ["x-fs-transpiler-imports"].includes(key))
+            .map(([key, value]) => [
+              `data-header-${key}`,
+              value,
+            ]),
+        )}
+        data-path={specifier}
+        dangerouslySetInnerHTML={{
+          __html: await response.text(),
+        }}
+      />
+    </>
+  );
+}
+
+
+const createSlot = <P,>(
+  Component: React.ComponentType<P>,
+  { name, path }: { name: string; path: string; }
+) => {
+    return (props: P) => {
+      return (
+        <> 
+        <hydrate style={{ display: "contents" }}>
+          <script
+            type="reframe/hydrate"
+            data-name={name}
+            data-props={JSON.stringify(props)}
+          />
+          <Component {...props} />
+        </hydrate>
+          <Module specifier={path} />
+          </>
+      );
+    };
+  };
+```
+
 ### What
 
 - FS
@@ -94,13 +182,32 @@ Initially, we create a Registry with a single Org for @reframe. We will have
       - how about client components?
         - same as how it works here now
 
-### Feb 25
+### Feb 26
 
-- re-organize
-  - create new git
-  - [gate one] - PR contains gates/one and reframe/core
-  - [gate two] - PR contains gates/two and reframe/core etc
-- create gate/seven
+- tailwind
+
+```ts
+// a.tsx
+
+export const App = () => <div css="justify-content items-center" />
+
+// tailwind:a.tsx
+
+justify-content items-center
+
+// tailwind:b.tsx
+
+bg-red-500 text-white justify-content items-center
+
+
+// postcss:entry.tsx
+```
+
+- [1h] cache-fs
+- [1.5h] blob fs
+- [1.5h] deployment
+- [1.5h] <hook>
+
 - create <Hook src="url" />
   - if invoked in the browser, it will fetch the initial html from the url, and
     inject it into the dom
@@ -114,7 +221,7 @@ Initially, we create a Registry with a single Org for @reframe. We will have
   - create <Hook.Server> that we can put in nextjs
   - create <Hook.Client> that we can put in nextjs
 
-- [] remove the necessity of hardcoding ~transpiler in path
+- [] move fs'es to @reframe/fs
 - [] add color to log
 - [] deployFS
   - [1] setup wildcard subdomain
@@ -152,3 +259,45 @@ Initially, we create a Registry with a single Org for @reframe. We will have
 
 - Editor
   - analyze all errors on ast tree, and resolve them ahead of time
+
+```
+git checkout -b gates/six && cp -r @gates/six hub/@gates/six && rm -rf hub/@reframe/core && cp -r @reframe/six hub/@reframe/core && git add hub
+
+git commit -m "gate six - react server components" && git push -f --set-upstream origin gates/six
+```
+
+```tailwind
+import tailwind from "npm:tailwindcss";
+import postcss from "npm:postcss";
+
+const html = (css) => `<div class="${css}" />`;
+
+async function serve(request) {
+  const css = new URL(request.url).searchParams.get("css");
+  const result = await postcss([
+    tailwind({
+      //...config,
+      content: [{ raw: html(css), extension: "html" }],
+    }),
+  ]).process(
+    `
+    @tailwind components;
+    @tailwind utilities;
+    `,
+    { from: undefined },
+  );
+
+  console.log(result.css);
+
+  return new Response(
+    `
+// ${css}
+
+${result.css}!
+`,
+    {
+      headers: { "content-type": "text/plain" },
+    },
+  );
+}
+```
