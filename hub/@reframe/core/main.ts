@@ -16,9 +16,11 @@ type Command<
   ...args: A
 ) => void | Promise<void>;
 
-type Commands = Command<{}, string[]> | {
-  [key: string]: Commands;
-};
+type Commands<P extends Record<string, string | number | boolean>> =
+  | Command<P, string[]>
+  | {
+    [key: string]: Commands<P>;
+  };
 
 const parseEntryPath = (entry: string) => {
   // @org/name(:version)?/path/to/entry
@@ -46,11 +48,13 @@ const parseEntryPath = (entry: string) => {
   };
 };
 
+type Env = { port: number };
+
 const commands = {
   dev: {
-    serve: (_: {}, entry: string) => {
+    serve: ({ port }, entry: string) => {
       const { org, name, version, path } = parseEntryPath(entry);
-      serve(org, name, version, path);
+      serve(org, name, version, path, port);
     },
   },
 
@@ -81,12 +85,13 @@ const commands = {
     }
     console.log(new TextDecoder().decode(stdout));
   },
-} satisfies Commands;
+} satisfies Commands<Env>;
 
 if (import.meta.main) {
   const args = parse(Deno.args);
+  console.log(args);
 
-  let command: Commands = commands;
+  let command: Commands<Env> = commands;
 
   while (typeof command !== "function" && args._.length > 0) {
     const next = String(args._.shift());
@@ -105,5 +110,5 @@ if (import.meta.main) {
     Deno.exit(0);
   }
 
-  await command(args, ...args._.map(String));
+  await command(args as unknown as Env, ...args._.map(String));
 }

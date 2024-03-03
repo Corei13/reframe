@@ -184,30 +184,6 @@ Initially, we create a Registry with a single Org for @reframe. We will have
 
 ### Feb 26
 
-- tailwind
-
-```ts
-// a.tsx
-
-export const App = () => <div css="justify-content items-center" />
-
-// tailwind:a.tsx
-
-justify-content items-center
-
-// tailwind:b.tsx
-
-bg-red-500 text-white justify-content items-center
-
-
-// postcss:entry.tsx
-```
-
-- [1h] cache-fs
-- [1.5h] blob fs
-- [1.5h] deployment
-- [1.5h] <hook>
-
 - create <Hook src="url" />
   - if invoked in the browser, it will fetch the initial html from the url, and
     inject it into the dom
@@ -216,26 +192,6 @@ bg-red-500 text-white justify-content items-center
   - figure out why suspense chunks are not working, we probably need to inject
     the scripts at the end of the html - at worst, we can send data as server
     sent stream, which is probably what should should do
-
-- goal
-  - create <Hook.Server> that we can put in nextjs
-  - create <Hook.Client> that we can put in nextjs
-
-- [] move fs'es to @reframe/fs
-- [] add color to log
-- [] deployFS
-  - [1] setup wildcard subdomain
-  - [1] READ /domain { deployment details }
-  - [1] WRITE /domain { ... } [package] and deploy to domain
-  - [1] READ / { deployed domains }
-  - [2] test
-- [] eventFs
-- [] hmr
-  - [] client can listen for file changes
-  - [] implement hmrFs on browser
-- [] reactActionFs
-- [] editor
-- [] git in editor
 
 ### Questions
 
@@ -259,45 +215,3 @@ bg-red-500 text-white justify-content items-center
 
 - Editor
   - analyze all errors on ast tree, and resolve them ahead of time
-
-```
-git checkout -b gates/six && cp -r @gates/six hub/@gates/six && rm -rf hub/@reframe/core && cp -r @reframe/six hub/@reframe/core && git add hub
-
-git commit -m "gate six - react server components" && git push -f --set-upstream origin gates/six
-```
-
-```tailwind
-import tailwind from "npm:tailwindcss";
-import postcss from "npm:postcss";
-
-const html = (css) => `<div class="${css}" />`;
-
-async function serve(request) {
-  const css = new URL(request.url).searchParams.get("css");
-  const result = await postcss([
-    tailwind({
-      //...config,
-      content: [{ raw: html(css), extension: "html" }],
-    }),
-  ]).process(
-    `
-    @tailwind components;
-    @tailwind utilities;
-    `,
-    { from: undefined },
-  );
-
-  console.log(result.css);
-
-  return new Response(
-    `
-// ${css}
-
-${result.css}!
-`,
-    {
-      headers: { "content-type": "text/plain" },
-    },
-  );
-}
-```

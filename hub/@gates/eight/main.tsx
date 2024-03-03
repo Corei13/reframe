@@ -1,6 +1,6 @@
 import React, { Suspense } from "npm:react@canary";
 import { render } from "@reframe/react/server.tsx";
-import { Module, Style } from "@reframe/react/module.tsx";
+import { Style } from "@reframe/react/module.tsx";
 
 import App from "./app.tsx";
 
@@ -28,15 +28,15 @@ export default function serve(request: Request) {
   const element = !partial
     ? (
       <Shell>
+        <Style path={"/~tw/~@" + import.meta.path} />
+        <div className="w-[200px] h-[200px] bg-primary-100 rounded-[10px]">
+          tailwind
+        </div>
         <App path={url.pathname} />
       </Shell>
     )
     : (
       <div>
-        <Style path={"/~tw/~@" + import.meta.path} />
-        <div className="w-[200px] h-[300px] bg-primary-100 rounded-[10px]">
-          nirob
-        </div>
         <App path={url.pathname} />
       </div>
     );

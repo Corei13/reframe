@@ -11,6 +11,7 @@ import { debugFs } from "./fs/debug.ts";
 import { httpFs } from "./fs/http.ts";
 import { createFs } from "./fs/lib/create.ts";
 import { reactClientFs } from "./fs/react/client.ts";
+import { tailwindFs } from "./fs/react/tailwind.ts";
 
 const withHeaders = <C extends Base>(fs: FS<C>) =>
   createFs<C>(`withHeaders<${fs.name}>`)
@@ -32,6 +33,7 @@ export default function serve(
   name: string,
   _version: string,
   entry: string,
+  port: number,
 ) {
   const hooksFs = localFs(`/`);
   const codeFs = localFs(`/@${org}/${name}`);
@@ -46,7 +48,8 @@ export default function serve(
       .mount("/~npm", () => npmFs())
       .mount("/~http", () => httpFs(false))
       .mount("/~https", () => httpFs())
-      .mount("/~react-client", () => reactClientFs(sourceFs)),
+      .mount("/~react-client", () => reactClientFs(sourceFs))
+      .mount("/~tw", () => tailwindFs(sourceFs)),
     // localFs(`/.cache/v${_version}`),
     memoryFs({}),
   );
@@ -63,7 +66,7 @@ export default function serve(
   const server = appFs.use(createBaseCtx);
 
   Deno.serve(
-    { port: 8080 },
+    { port },
     async (request) => {
       // ignore favicon
       try {

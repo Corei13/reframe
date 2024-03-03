@@ -12,7 +12,7 @@ export const unmoduleFs = <C extends Base>(base: FS<C>) =>
 
       return ctx.text(transpiled, {
         ...response.headers,
-        "x-fs-unmodule-imports": imports.join(","),
+        "x-fs-unmodule-imports": imports.filter((s) => s !== "@").join(","),
         "x-fs-unmodule-exported-names": exports.names.join(","),
         "x-fs-unmodule-exported-namespaces": exports.namespaces.join(","),
         "content-type": "application/javascript",

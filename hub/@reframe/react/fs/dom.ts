@@ -1,9 +1,7 @@
-import type { Base, FS } from "@reframe/core/ctx/ctx.ts";
+import type { Base } from "@reframe/core/ctx/ctx.ts";
 import { createFs } from "@reframe/core/fs/lib/create.ts";
 
-// parse
-
-export const domFs = <C extends Base>(source: FS<C>) =>
+export const domFs = <C extends Base>() =>
   createFs<C>("dom")
     .read(async (ctx) => {
       const script = globalThis.document.querySelector(

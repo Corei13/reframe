@@ -15,7 +15,10 @@ export type Base = {
   getBody: () => Body;
 
   text: typeof text<Record<string, string>>;
-  json: typeof json<Record<string, string>>;
+  json: <T, H extends Record<string, string>>(
+    content: T,
+    headers: H,
+  ) => Body<H, T>;
   response: typeof response<Record<string, string>>;
 
   badRequest: (message?: string) => FSError;
@@ -32,9 +35,9 @@ export type Ctx<
 > = C & {
   fs: FSClient;
   runtime: (entry: string) => Runtime<C>;
-  create: (request: Request, fs?: FS<C>) => Ctx<C>;
-  cd: (path: string | ((_: string) => string)) => Ctx<C>;
-  switch: (fs: FS<C>) => Ctx<C>;
+  create: (request: Request, fs?: FS<C>) => Ctx<C, H>;
+  cd: (path: string | ((_: string) => string)) => Ctx<C, H>;
+  switch: (fs: FS<C>) => Ctx<C, H>;
 
   read(
     fs: FS<C>,

@@ -18,6 +18,7 @@ export const createSlot = <P,>(Component: React.ComponentType<P>, {
             data-path={path}
             data-props={JSON.stringify(props)}
           />
+
           <Component {...props} />
         </hydrate>
         <Suspense>

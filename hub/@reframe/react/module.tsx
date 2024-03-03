@@ -37,3 +37,39 @@ export async function Module(
 
   return referrer ? element : <modules hidden>{element}</modules>;
 }
+
+export async function Style(
+  { path }: { path: string },
+) {
+  const response = await Reframe.hydrate.server.getOnce(path);
+
+  if (!response) {
+    return null;
+  }
+
+  return (
+    <>
+      <script
+        type={"reframe/style"}
+        data-path={path}
+        dangerouslySetInnerHTML={{
+          __html: await response.text(),
+        }}
+      />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            // add the tw:module as style
+            const script = document.querySelector('script[type="reframe/style"][data-path="${path}"]');
+            console.log("style", script);
+
+            const style = document.createElement("style");
+            style.innerHTML = script.innerHTML;
+            document.head.appendChild(style);
+            script.remove();
+          `,
+        }}
+      />
+    </>
+  );
+}
