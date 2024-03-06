@@ -1,7 +1,8 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-run --allow-sys --unstable-kv --watch
+#!/usr/bin/env -S deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-sys --unstable-kv --watch
 
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 import serve from "./server.ts";
+import build from "./build.ts";
 
 // dev serve [entry]
 // prod serve [entry]
@@ -56,6 +57,12 @@ const commands = {
       const { org, name, version, path } = parseEntryPath(entry);
       serve(org, name, version, path, port);
     },
+  },
+
+  build: (_: {}, entry: string) => {
+    const { org, name, version, path } = parseEntryPath(entry);
+    console.log("build", org, name, version, path);
+    return build(org, name, version, path);
   },
 
   prod: {

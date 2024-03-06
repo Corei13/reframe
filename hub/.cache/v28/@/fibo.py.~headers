@@ -1,0 +1,8 @@
+{
+  "content-type": "application/octet-stream",
+  "x-fs-router": "/@ -> /fibo.py",
+  "x-fs-router-path": "/@/fibo.py",
+  "x-fs-local-cwd": "/Users/dj/Work/reframe-v1/hub",
+  "x-fs-abs-path": "/Users/dj/Work/reframe-v1/hub/.cache/v28/@/fibo.py",
+  "x-fs-local-stat-size": "158"
+}

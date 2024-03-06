@@ -1,0 +1,8 @@
+{
+  "content-type": "application/javascript",
+  "x-fs-router": "/@ -> /main.ts",
+  "x-fs-router-path": "/@/main.ts",
+  "x-fs-local-cwd": "/Users/dj/Work/reframe-v1/hub",
+  "x-fs-abs-path": "/Users/dj/Work/reframe-v1/hub/.cache/v28/@/main.ts",
+  "x-fs-local-stat-size": "276"
+}

@@ -1,0 +1,11 @@
+{
+  "content-type": "application/javascript",
+  "x-fs-router": "/~@ -> /@ -> /main.ts",
+  "x-fs-router-path": "/~@/@/main.ts",
+  "x-fs-unmodule-imports": "/:./fibo.py",
+  "x-fs-unmodule-exported-names": "",
+  "x-fs-unmodule-exported-namespaces": "",
+  "x-fs-local-cwd": "/Users/dj/Work/reframe-v1/hub",
+  "x-fs-abs-path": "/Users/dj/Work/reframe-v1/hub/.cache/v29/~@/@/main.ts",
+  "x-fs-local-stat-size": "416"
+}

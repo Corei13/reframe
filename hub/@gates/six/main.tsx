@@ -1,5 +1,5 @@
 import React, { Suspense } from "npm:react@canary";
-import { render } from "@reframe/react/server.ts";
+import { render } from "@reframe/react/server.tsx";
 
 import App from "./app.tsx";
 
@@ -39,9 +39,7 @@ export default function serve(request: Request) {
   return render(element);
 }
 
-if (import.meta.main) {
-  Deno.serve(
-    { port: 8082 },
-    serve,
-  );
-}
+Deno.serve(
+  { port: 8082 },
+  serve,
+);

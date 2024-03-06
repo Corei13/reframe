@@ -35,13 +35,13 @@ export default function serve(
   entry: string,
   port: number,
 ) {
-  const hooksFs = localFs(`/`);
+  const hubFs = localFs(`/`);
   const codeFs = localFs(`/@${org}/${name}`);
 
   const sourceFs: FS<Base> = cacheFs(
     routerFs()
       // all hooks
-      .mount("/", () => hooksFs)
+      .mount("/", () => hubFs)
       // our app
       .mount("/@", () => codeFs)
       .mount("/~@", () => unmoduleFs(sourceFs))
