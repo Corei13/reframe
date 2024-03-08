@@ -3,3 +3,8 @@
 
 .cache
 **/.cache
+
+.run
+**/.run
+
+hub/*.ts

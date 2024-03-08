@@ -1,10 +1,9 @@
 import type { Body } from "./body.ts";
 
 export type Path = string;
+export type Content = Body;
 
 export type Hash = string & { __type: "Hash" };
-
-export type Content = Body;
 
 export type Deployment = {
   id: string;
@@ -88,37 +87,6 @@ export type FS<
   Wc extends Watchable | unknown = unknown,
 > = {} & R & W & T & L & Wc;
 
-export type Runtime<F extends FS, Ext extends {} = {}> = {
-  fs: F;
-
-  meta: {
-    enter: (path: Path) => Runtime<F, Ext>;
-    // the original entry module
-    entry: Path;
-    // which module I am in
-    path: Path;
-  };
-
-  resolve: (specifier: string, referrer: string) => string;
-
-  evaluate: <M>(content: Content) => Promise<M>;
-
-  import: <M>(
-    path: Path,
-  ) => Promise<Module<M>>;
-
-  importMany: <M>(...paths: Path[]) => Promise<Record<Path, M>>;
-
-  extend: <E extends {}>(
-    _: (runtime: Runtime<F, Ext>) => E,
-  ) => Runtime<F, Ext & E>;
-} & Ext;
-
-export type Module<D = unknown, E extends Record<string, unknown> = {}> = {
-  default: D;
+export type Module<D extends Record<string, unknown> = {}> = {
   __esModule: true;
-} & E;
-
-export type Runnable<M = unknown> = <R extends Runtime<any, any>>(
-  runtime: R,
-) => Promise<Module<M>>;
+} & D;

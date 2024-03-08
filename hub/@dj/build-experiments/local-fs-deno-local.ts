@@ -57,7 +57,7 @@ const build = async (
     const pending = Array.from(promises.values());
     promises.clear();
     await Promise.all(pending);
-    drain(concurrency);
+    return drain(concurrency);
   };
 
   const buildOne = async (path: string) => {

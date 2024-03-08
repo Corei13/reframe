@@ -113,6 +113,10 @@ Initially, we create a Registry with a single Org for @reframe. We will have
 - how to implement test framework, for functions, components, macros and app
   flows from the ground up?
   - we want to do a great job at this if we want AI to write safe, correct code
+- how to serialize/deserialize elements?
+  - checkout renderToPipeableStream and createFromFetch
+    https://www.brenelz.com/posts/simple-rsc-with-vinxi
+  - checkout vercel ai/rsc
 
 ## Apps
 

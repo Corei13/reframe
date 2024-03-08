@@ -13,8 +13,6 @@
 // @org/name/fs.ts
 export { fs };
 
-// @org/name/runtime.ts
-
 // @org/name/build.ts
 import Runtime from "@";
 import { build } from "@reframe/core/build.ts";
@@ -28,7 +26,24 @@ build({
   },
 });
 
+// @org/name/run.ts [...entry] [...args]
 
+import Runtime from "@";
+
+const moduleCache = new Map<string, Promise<Module>>();
+const runFs = Runtime.fs
+  .mount("/~ai", createAIFs());
+
+const runtime = Runtime
+  .withFs(runFs)
+  .withImport(createDynamicImporter(moduleCache))
+  .withExtension({
+    openai: createOpenAIExtension(),
+  })
+  .withArgs(args)
+  .withEntry(entry);
+
+await runtime.run();
 
 
 
@@ -48,32 +63,14 @@ const runtime = createFromImporter({
   extension: {},
 });
 
-const { createRuntime: createHookRuntime } = await runtime.import(
-  "/~@/@/runtime.ts",
-);
-const hookRuntime = createHookRuntime(runtime);
-
-await hookRuntime.import(entry);
+await runtime
+  .withArgs(args)
+  .run("@org/name/run.ts")
 
 
 
 // $ reframe-cli build @org/name [...entry]
 // deno run @reframe/core/build.ts @org/name [...entry] [...args]
 
-import { run } from "./run.ts";
-
-const fs = createRouterFs()
-  .mount("/", () => createLocalFs("/"))
-  .mount("/@", () => createLocalFs(`/${hook}`))
-  .mount("/~@", () => createRunnableFs(routerFs))
-  .mount("/~npm", () => createNpmFs())
-  .mount("/~http", () => createHttpFs({ ssl: false }))
-  .mount("/~https", () => createHttpFs({ ssl: true }));
-
-await run({
-  fs,
-  hook: "@org/name",
-  entry: "src/build.ts",
-  args: ["-o", ".build"],
-});
+import Runtime from "@";
 ```

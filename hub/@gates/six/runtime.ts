@@ -1,9 +1,7 @@
-import { FS, Runtime } from "../../@dj/build-experiments/defs.ts";
+import { createRuntime as createZeroRuntime } from "@reframe/zero/runtime.ts";
 
-export const createRuntime = <F extends FS, E extends {}>(
-  runtime: Runtime<F, E>,
-) => {
-  return runtime.extend(() => ({
+export const createRuntime = (args: string[]) => {
+  return createZeroRuntime(args).extend({
     hydrate: {
       server: {
         getOnce: (specifier: string) => {
@@ -35,5 +33,5 @@ export const createRuntime = <F extends FS, E extends {}>(
         has: (specifier: string) => false,
       },
     },
-  }));
+  });
 };
