@@ -40,6 +40,5 @@ export default function serve(request: Request) {
 }
 
 Deno.serve(
-  { port: 8082 },
   serve,
 );
