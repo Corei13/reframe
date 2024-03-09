@@ -1,14 +1,14 @@
-import { Module, Readable, Writeable } from "./defs.ts";
-import { createCacheFs } from "./fs/cache.ts";
-import { createHttpFs } from "./fs/http.ts";
-import { createLocalFs, createLocalFsWithHeaders } from "./fs/local.ts";
-import { createNpmFs } from "./fs/npm.ts";
-import { createRouterFs } from "./fs/router.ts";
-import { createRunnableFs } from "./fs/runnable.ts";
-import * as R from "./zero/runtime.ts";
-import { createDynamicImporter } from "./zero/importer/dynamic.ts";
-import { evaluate } from "./zero/evaluator/data-url.ts";
-import { resolvePath } from "./utils/path.ts";
+import { Module, Readable, Writeable } from "../defs.ts";
+import { createCacheFs } from "../fs/cache.ts";
+import { createHttpFs } from "../fs/http.ts";
+import { createLocalFs, createLocalFsWithHeaders } from "../fs/local.ts";
+import { createNpmFs } from "../fs/npm.ts";
+import { createRouterFs } from "../fs/router.ts";
+import { createRunnableFs } from "../fs/runnable.ts";
+import * as R from "../zero/runtime.ts";
+import { createDynamicImporter } from "../zero/importer/dynamic.ts";
+import { evaluate } from "../zero/evaluator/data-url.ts";
+import { resolvePath } from "../utils/path.ts";
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 
 export const parseArgs = (_args: string[]) => {

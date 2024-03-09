@@ -8,12 +8,14 @@ export const createRunnableFs = <C extends Readable>(base: C) =>
       .read(async (path) => {
         const response = await base.read(path);
 
+        const code = await response.text();
+
         const { transpiled, imports, dynamicImports, exports } = runnable(
           path,
-          await response.text(),
+          code,
         );
 
-        return ctx.text(transpiled, {
+        const body = ctx.text(transpiled, {
           ...response.headers,
           "x-fs-runnable-imports": imports.filter((s) => s !== "@").join(","),
           "x-fs-runnable-dynamic-imports": dynamicImports.filter((s) =>
@@ -23,5 +25,7 @@ export const createRunnableFs = <C extends Readable>(base: C) =>
           "x-fs-runnable-exported-namespaces": exports.namespaces.join(","),
           "content-type": "application/javascript",
         });
+
+        return body;
       })
   );

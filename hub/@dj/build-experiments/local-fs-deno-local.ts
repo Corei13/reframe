@@ -65,8 +65,11 @@ const build = async (
 
     const response = await routerFs.read(path);
 
-    const deps = response.header("x-fs-runnable-imports")
-      ?.split(",").filter((s) => s !== "") ?? [];
+    const split = (s?: string) => s?.split(",").filter((s) => s !== "") ?? [];
+    const deps = [
+      ...split(response.header("x-fs-runnable-imports")),
+      ...split(response.header("x-fs-runnable-dynamic-imports")),
+    ];
 
     for (const dep of deps) {
       if (dep.startsWith("node:")) {

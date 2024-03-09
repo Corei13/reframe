@@ -96,11 +96,10 @@ export const createRuntime = <F extends FS, E extends {}>({
           extension,
         }),
     },
-    run: () => {
-      console.log("running", runtime.meta.path);
-      return runtime.meta
-        .setEntry(runtime.meta.path)
-        .import("/:" + runtime.meta.path);
+    run: (_path?: string) => {
+      const path = _path ?? runtime.meta.path;
+      console.log("running", path);
+      return runtime.import("/:" + path);
     },
     extend: <E2>(extension2: E2) => {
       return createRuntime({

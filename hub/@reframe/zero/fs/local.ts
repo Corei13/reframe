@@ -9,7 +9,7 @@ export const createLocalFs = (prefix: `/${string}`) =>
     ctx
       .read(async (_path) => {
         const path = Deno.cwd() + cleanPath(prefix + _path);
-        const content = await Deno.readTextFile(path);
+        const content = Deno.readTextFileSync(path);
 
         return ctx.text(content, {});
       })
@@ -26,7 +26,7 @@ export const createLocalFs = (prefix: `/${string}`) =>
           "content-type": getContentType(path),
         };
 
-        await Deno.writeTextFile(path, content);
+        Deno.writeTextFileSync(path, content);
 
         return ctx.text(content, headers);
       })
@@ -44,7 +44,7 @@ export const createLocalFsWithHeaders = (
       .read(async (_path) => {
         const path = Deno.cwd() + cleanPath(prefix + _path);
         const suffix = _suffix(_path);
-        const content = await Deno.readTextFile(path + suffix.content);
+        const content = Deno.readTextFileSync(path + suffix.content);
         const headers = JSON.parse(
           await Deno.readTextFile(path + suffix.headers).catch(() => "{}"),
         );
@@ -56,6 +56,14 @@ export const createLocalFsWithHeaders = (
 
         await ensureDir(dirname(path));
 
+        if (path.includes("zero/body.ts")) {
+          console.log(
+            [path, ...content.split("\n")]
+              .map((s) => "[debug] " + s)
+              .join("\n"),
+          );
+        }
+
         const headers = {
           ..._headers,
           "x-fs-local-cwd": Deno.cwd(),
@@ -65,8 +73,8 @@ export const createLocalFsWithHeaders = (
         };
 
         const suffix = _suffix(_path);
-        await Deno.writeTextFile(path + suffix.content, content);
-        await Deno.writeTextFile(
+        Deno.writeTextFileSync(path + suffix.content, content);
+        Deno.writeTextFileSync(
           path + suffix.headers,
           JSON.stringify(headers, null, 2),
         );

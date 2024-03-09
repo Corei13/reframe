@@ -1,7 +1,9 @@
-import { createRuntime as createZeroRuntime } from "@reframe/zero/runtime.ts";
+import type { Runtime } from "@reframe/zero/zero/runtime.ts";
 
-export const createRuntime = (args: string[]) => {
-  return createZeroRuntime(args).extend({
+export const extendRuntime = <
+  R extends Runtime<{}, {}>,
+>(runtime: R) => {
+  return runtime.extend({
     hydrate: {
       server: {
         getOnce: (specifier: string) => {
@@ -12,8 +14,8 @@ export const createRuntime = (args: string[]) => {
               console.warn("text is not implemented", specifier);
 
               return `export default () => {
-                console.log("hydrate.getOnce", "${specifier}");
-              }`;
+              console.log("hydrate.getOnce", "${specifier}");
+            }`;
             },
           };
         },
@@ -25,8 +27,8 @@ export const createRuntime = (args: string[]) => {
               console.warn("text is not implemented", specifier);
 
               return `export default () => {
-                    console.log("hydrate.get", "${specifier}");
-                }`;
+                  console.log("hydrate.get", "${specifier}");
+              }`;
             },
           };
         },

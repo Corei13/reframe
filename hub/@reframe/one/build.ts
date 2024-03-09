@@ -1,6 +1,6 @@
 import Runtime from "@";
 import { createCacheFs } from "@reframe/zero/fs/cache.ts";
-import { createRuntime } from "@reframe/zero/runtime.ts";
+import { createRuntime } from "@reframe/zero/runtime/dev.ts";
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 
 import { cleanPath } from "@reframe/zero/utils/path.ts";
@@ -53,6 +53,36 @@ const createDenoJson = () =>
     null,
     2,
   );
+
+const createEntryTs = (suffix: string) => `
+import $createRuntime from "/~@/@reframe/zero/zero/runtime.ts${suffix}";
+import $createLocalImporter from "/~@/@reframe/zero/zero/importer/local.ts${suffix}";
+import $path from "/~@/@reframe/zero/utils/path.ts${suffix}";
+
+import meta from "./meta.json" with { type: "json" };
+
+const { createRuntime } = await $createRuntime();
+const { createLocalImporter } = await $createLocalImporter();
+const { resolvePath } = await $path();
+
+const moduleCache = new Map();
+
+const runtime = createRuntime({
+  entry: meta.entry,
+  org: meta.org,
+  name: meta.name,
+  fs: {},
+  resolve: resolvePath,
+  evaluate: () => {},
+  importer: createLocalImporter(moduleCache, "${suffix}"),
+  args: Deno.args,
+  extension: {},
+});
+
+const { extendRuntime } = await runtime.import("/:" + "/~@/@/runtime/extension.ts");
+
+await extendRuntime(runtime).run(meta.entry);
+`;
 
 const createMetaJson = (meta: unknown) => JSON.stringify(meta, null, 2);
 
@@ -108,8 +138,11 @@ const queue = createAsyncTaskQueue(100, async (path) => {
   console.log("[build] read", path);
   const response = await buildFs.read(path);
 
-  const deps = response.header("x-fs-runnable-imports")
-    ?.split(",").filter((s) => s !== "") ?? [];
+  const split = (s?: string) => s?.split(",").filter((s) => s !== "") ?? [];
+  const deps = [
+    ...split(response.header("x-fs-runnable-imports")),
+    ...split(response.header("x-fs-runnable-dynamic-imports")),
+  ];
 
   for (const dep of deps) {
     if (dep.startsWith("node:")) {
@@ -130,9 +163,15 @@ const queue = createAsyncTaskQueue(100, async (path) => {
 });
 
 await queue.enqueue(entry);
+await queue.enqueue("/~@/@/runtime/dev.ts");
+// we import the following files in /entry.ts
+await queue.enqueue("/~@/@reframe/zero/zero/runtime.ts");
+await queue.enqueue("/~@/@reframe/zero/zero/importer/local.ts");
+await queue.enqueue("/~@/@reframe/zero/utils/path.ts");
 
 await destinationFs.write("/deno.json", createDenoJson(), {});
 await destinationFs.write("/meta.json", createMetaJson(runtime.meta), {});
+await destinationFs.write("/entry.ts", createEntryTs(runnableSuffix), {});
 await queue.drain(0);
 
 export {};

@@ -26,7 +26,7 @@ const getFiles = async (base: string, limit: number) => {
 };
 
 const Files = async () => {
-  const files = await getFiles("@reframe/core", 50);
+  const files = await getFiles(".", 50);
 
   return (
     <>
