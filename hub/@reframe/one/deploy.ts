@@ -1,3 +1,9 @@
+import { config } from "https://deno.land/x/dotenv/mod.ts";
+
+const env = config();
+const accessToken = env.DENO_TOKEN;
+const projectId = env.DENO_PROJECT_ID;
+
 // recursively read all the files from given path
 const getFiles = async (base: string, limit: number) => {
   const paths: File[] = [];
@@ -64,11 +70,11 @@ const body = {
 // Deno.writeTextFileSync("body.json", JSON.stringify(body, null, 2));
 
 const response = await fetch(
-  "https://api.deno.com/v1/projects/3845526d-3a6a-47c1-86c3-6594d8e929a1/deployments",
+  `https://api.deno.com/v1/projects/${projectId}/deployments`,
   {
     method: "POST",
     headers: {
-      authorization: "Bearer ddo_LCoe6N9p6lR4ZkwFfP1zvnRZcyu6953Iw3Mh",
+      authorization: `Bearer ${accessToken}`,
       accept: "application/json",
       "content-type": "application/json",
     },
