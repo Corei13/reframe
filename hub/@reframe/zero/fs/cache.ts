@@ -7,11 +7,16 @@ export const createCacheFs = <
 >(
   source: S,
   cache: C,
+  shouldRevalidate: (path: string) => boolean = () => true,
 ) => {
   return createFs((ctx) =>
     ctx
       .read(async (path) => {
         try {
+          if (!shouldRevalidate(path)) {
+            throw "skip";
+          }
+
           const body = await cache.read(path);
 
           //   ctx.log("HIT", path);

@@ -61,6 +61,13 @@ export function createRuntime(_args: string[]) {
       content: ".content.mjs",
       headers: ".headers.json",
     })),
+    (path) =>
+      [
+        "/~npm",
+        "/~https",
+        "/~@/~npm",
+        "/~@/~https",
+      ].some((prefix) => path.startsWith(prefix)),
   );
 
   const moduleCache = new Map<string, Promise<Module>>();

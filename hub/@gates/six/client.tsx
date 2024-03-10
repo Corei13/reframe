@@ -31,7 +31,7 @@ export const Files = ({ files }: { files: File[] }) => {
           maxWidth: 240,
         }}
       >
-        <h1>Files (v45)</h1>
+        <h1>Files (v46)</h1>
 
         <Y>
           <Button>Click me</Button>
