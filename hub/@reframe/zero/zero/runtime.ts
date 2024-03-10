@@ -28,6 +28,7 @@ export type Runtime<F extends FS, E extends {}> = E & {
   ) => Promise<Record<Path, Module<M>>>;
   args: string[];
   extend: <E2>(extension2: E2) => Runtime<F, E & E2>;
+  setFs: <F2 extends F>(fs: F2) => Runtime<F2, E>;
 };
 
 export const createRuntime = <F extends FS, E extends {}>({
@@ -101,6 +102,19 @@ export const createRuntime = <F extends FS, E extends {}>({
       console.log("running", path);
       return runtime.import("/:" + path);
     },
+    setFs: <F2 extends F>(fs2: F2) =>
+      createRuntime<F2, E>({
+        entry,
+        org,
+        name,
+        path,
+        fs: fs2,
+        resolve,
+        evaluate,
+        importer,
+        args,
+        extension,
+      }),
     extend: <E2>(extension2: E2) => {
       return createRuntime({
         entry,

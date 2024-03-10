@@ -1,4 +1,4 @@
-import { Module, Readable, Writeable } from "../defs.ts";
+import { Module, Readable, Routable, Writeable } from "../defs.ts";
 import { createCacheFs } from "../fs/cache.ts";
 import { createHttpFs } from "../fs/http.ts";
 import { createLocalFs, createLocalFsWithHeaders } from "../fs/local.ts";
