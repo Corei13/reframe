@@ -5,9 +5,10 @@ import { renderToReadableStream } from "npm:react-dom@canary/server";
 import { Module } from "./module.tsx";
 
 export const render = async (element: ReactElement) => {
-  const bootstrap = await Reframe.hydrate.server.getOnce(
+  const bootstrapResponse = await Reframe.hydrate.server.getOnce(
     "/~@/@reframe/react/bootstrap/runtime.ts",
-  ).text();
+  );
+  const bootstrap = await bootstrapResponse.text();
 
   if (!bootstrap.startsWith("export default ")) {
     throw new Error("bootstrap must be a default export");

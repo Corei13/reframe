@@ -1,5 +1,6 @@
 import React, { Suspense } from "npm:react@canary";
 import { type File, Files as Editor } from "./client.tsx";
+import { Module } from "/@reframe/react/module.tsx";
 
 const getFiles = async (base: string, limit: number) => {
   const paths: File[] = [];
@@ -41,6 +42,7 @@ export default function App({ path }: { path: string }) {
   return (
     <Suspense fallback={<div>Loading!...</div>}>
       <div>Hello {path}!!!!!</div>
+      <Module specifier="@:npm:react@canary" />
       <Files />
     </Suspense>
   );

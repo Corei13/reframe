@@ -1,5 +1,5 @@
 import React, { Suspense } from "npm:react@canary";
-import { render } from "@reframe/react/server.tsx";
+import { render } from "/@reframe/react/server.tsx";
 
 import App from "./app.tsx";
 
