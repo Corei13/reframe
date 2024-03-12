@@ -1,8 +1,8 @@
-import type { Module } from "../../defs.ts";
 import { Runtime } from "../runtime.ts";
+import { ModuleCache } from "../../module-cache.ts";
 
 export const createLocalImporter = <R extends Runtime<{}, {}>>(
-  moduleCache: Map<string, Promise<Module>>,
+  moduleCache: ModuleCache,
   importSuffix = "",
 ) =>
 (runtime: R) => {
@@ -27,7 +27,7 @@ export const createLocalImporter = <R extends Runtime<{}, {}>>(
       moduleFn.default(runtime.meta.setPath(path))
     );
 
-    moduleCache.set(path, modulePromise);
+    moduleCache.set(path, modulePromise, runtime.meta.path);
 
     return modulePromise;
   };

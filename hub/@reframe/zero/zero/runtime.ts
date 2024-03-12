@@ -8,9 +8,9 @@ export type Runnable<
   runtime: R,
 ) => Promise<Module<M>>;
 
-export type Resolver = (specifier: string, referrer: string) => string;
+export type Resolver = (specifier: string, referrer: Path) => Path;
 
-export type Runtime<F extends FS, E extends {}> = E & {
+export type Runtime<F extends FS = {}, E extends {} = {}> = E & {
   fs: F;
   resolve: Resolver;
   evaluate: <M>(content: Content) => Promise<M>;
@@ -18,10 +18,10 @@ export type Runtime<F extends FS, E extends {}> = E & {
     entry: Path;
     path: Path;
     main: boolean;
-    setPath: (path: string) => Runtime<F, E>;
-    setEntry: (entry: string) => Runtime<F, E>;
+    setPath: (path: Path) => Runtime<F, E>;
+    setEntry: (entry: Path) => Runtime<F, E>;
   };
-  run: <M extends Record<string, unknown>>() => Promise<Module<M>>;
+  run: <M extends Record<string, unknown>>(path?: Path) => Promise<Module<M>>;
   import: <M extends {}>(path: Path) => Promise<Module<M>>;
   importMany: <M extends {}>(
     ...paths: Path[]
@@ -29,6 +29,7 @@ export type Runtime<F extends FS, E extends {}> = E & {
   args: string[];
   extend: <E2>(extension2: E2) => Runtime<F, E & E2>;
   setFs: <F2 extends F>(fs: F2) => Runtime<F2, E>;
+  setArgs: (args: string[]) => Runtime<F, E>;
 };
 
 export const createRuntime = <F extends FS, E extends {}>({
@@ -69,13 +70,14 @@ export const createRuntime = <F extends FS, E extends {}>({
       org,
       name,
       path,
+
       main: true,
-      setPath: (path: string) =>
+      setPath: (newPath: Path) =>
         createRuntime({
           entry,
           org,
           name,
-          path,
+          path: newPath,
           fs,
           resolve,
           evaluate,
@@ -84,7 +86,7 @@ export const createRuntime = <F extends FS, E extends {}>({
           extension,
         }),
 
-      setEntry: (path: string) =>
+      setEntry: (path: Path) =>
         createRuntime({
           entry: path,
           org,
@@ -97,10 +99,10 @@ export const createRuntime = <F extends FS, E extends {}>({
           extension,
         }),
     },
-    run: (_path?: string) => {
+    run: (_path?: Path) => {
       const path = _path ?? runtime.meta.path;
       console.log("running", path);
-      return runtime.import("/:" + path);
+      return runtime.import(`/:${path}`);
     },
     setFs: <F2 extends F>(fs2: F2) =>
       createRuntime<F2, E>({
@@ -109,6 +111,19 @@ export const createRuntime = <F extends FS, E extends {}>({
         name,
         path,
         fs: fs2,
+        resolve,
+        evaluate,
+        importer,
+        args,
+        extension,
+      }),
+    setArgs: (args: string[]) =>
+      createRuntime({
+        entry,
+        org,
+        name,
+        path,
+        fs,
         resolve,
         evaluate,
         importer,
@@ -144,3 +159,11 @@ export const createRuntime = <F extends FS, E extends {}>({
 
   return runtime;
 };
+
+// declare a RuntimeExtension interface that can be extensible from importing modules
+
+export default new Proxy({}, {
+  get: (_target, prop) => {
+    throw new Error(`Runtime.${String(prop)} is not available in this context`);
+  },
+}) as Runtime;

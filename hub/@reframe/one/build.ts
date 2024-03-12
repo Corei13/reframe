@@ -1,14 +1,15 @@
 import Runtime from "@";
 import { createCacheFs } from "@reframe/zero/fs/cache.ts";
-import { createRuntime } from "@reframe/zero/runtime/dev.ts";
+import { createRuntime } from "@reframe/zero/runtime.ts";
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 
 import { cleanPath } from "@reframe/zero/utils/path.ts";
 import { createLocalFsWithHeaders } from "@reframe/zero/fs/local.ts";
+import { Path } from "@reframe/zero/defs.ts";
 
 const createAsyncTaskQueue = <M>(
   maxConcurrency: number,
-  task: (key: string) => Promise<M>
+  task: (path: Path) => Promise<M>,
 ) => {
   const promises = new Map<string, Promise<M>>();
   const done = new Set<string>();
@@ -51,11 +52,10 @@ const createDenoJson = () =>
       },
     },
     null,
-    2
+    2,
   );
 
-const createEntryTs = (suffix: string, paths: string[]) =>
-  `
+const createEntryTs = (suffix: string, paths: string[]) => `
 import $createRuntime from "/~@/@reframe/zero/zero/runtime.ts${suffix}";
 import $createStaticImporter from "/~@/@reframe/zero/zero/importer/static.ts${suffix}";
 import $path from "/~@/@reframe/zero/utils/path.ts${suffix}";
@@ -68,9 +68,11 @@ const { resolvePath } = await $path();
 
 const require = (specifier) => {
   switch (specifier) {
-    ${paths
-      .map((path) => `case "${path}": return import("${path + suffix}");`)
-      .join("\n\t\t")}
+    ${
+  paths
+    .map((path) => `case "${path}": return import("${path + suffix}");`)
+    .join("\n\t\t")
+}
     default:
       throw new Error("module not found: " + specifier);
   }
@@ -90,9 +92,11 @@ const runtime = createRuntime({
   extension: {},
 });
 
-const { extendRuntime } = await runtime.import("/:" + "/~@/@/runtime/extension.ts");
 
-await extendRuntime(runtime).run(meta.entry);
+const { createRuntime: createNewRuntime } = await runtime.import("/:" + "/~@/@/runtime.ts");
+
+
+await createNewRuntime().run(meta.entry);
 `;
 
 const createMetaJson = (meta: unknown) => JSON.stringify(meta, null, 2);
@@ -127,20 +131,20 @@ const destinationFs = createLocalFsWithHeaders(
       ? runnableSuffix
       : "",
     headers: ".~headers",
-  })
+  }),
 );
 
 console.log(
   "[build]",
   runtime.meta,
-  `${cleanPath(args.buildPath)}/@${org}/${name}/`
+  `${cleanPath(args.buildPath)}/@${org}/${name}/`,
 );
 
 const buildFs = createCacheFs(runtime.fs, destinationFs);
 
 const queue = createAsyncTaskQueue(100, async (path) => {
   console.log("[build] read", path);
-  const response = await buildFs.read(path);
+  const response = await buildFs.read(path, {});
 
   const split = (s?: string) => s?.split(",").filter((s) => s !== "") ?? [];
   const deps = [
@@ -164,7 +168,7 @@ const queue = createAsyncTaskQueue(100, async (path) => {
 });
 
 await queue.enqueue(entry);
-await queue.enqueue("/~@/@/runtime/extension.ts");
+await queue.enqueue("/~@/@/runtime.ts");
 // we import the following files in /entry.ts
 await queue.enqueue("/~@/@reframe/zero/zero/runtime.ts");
 await queue.enqueue("/~@/@reframe/zero/zero/importer/static.ts");
@@ -176,7 +180,7 @@ await queue.drain(0);
 await destinationFs.write(
   "/entry.ts",
   createEntryTs(runnableSuffix, Array.from(queue.done)),
-  {}
+  {},
 );
 
 export {};

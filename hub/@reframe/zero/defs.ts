@@ -1,6 +1,6 @@
 import type { Body } from "./body.ts";
 
-export type Path = string;
+export type Path = `/${string}`;
 export type Content = Body;
 
 export type Hash = string & { __type: "Hash" };
@@ -39,7 +39,7 @@ export type Hub = {
 };
 
 export type Readable = {
-  read: (path: Path) => Promise<Content>;
+  read: (path: Path, headers: Record<string, string>) => Promise<Content>;
 };
 
 export type Writeable = {
@@ -62,7 +62,10 @@ export type Listable = {
 };
 
 export type Watchable = {
-  watch: (path: Path, callback: (path: Path) => void) => () => void;
+  watch: (
+    path: Path,
+    callback: (event: { path: Path }) => Promise<void> | void,
+  ) => () => void;
 };
 
 export type Routable<

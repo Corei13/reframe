@@ -5,8 +5,8 @@ import { runnable } from "../ts/runnable.ts";
 export const createRunnableFs = <C extends Readable>(base: C) =>
   createFs((ctx) =>
     ctx
-      .read(async (path) => {
-        const response = await base.read(path);
+      .read(async (path, headers) => {
+        const response = await base.read(path, headers);
 
         const code = await response.text();
 

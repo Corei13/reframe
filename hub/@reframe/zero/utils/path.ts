@@ -1,3 +1,5 @@
+import type { Path } from "../defs.ts";
+
 const reduceDotDot = (path: string[]): string[] => {
   return path.reduce((slice, p) => {
     if (p === ".." && slice.length > 0 && slice[slice.length - 1] !== "..") {
@@ -103,7 +105,7 @@ export const absolute = (specifier: string): string => {
   );
 };
 
-export const resolvePath = (specifier: string, referrer: string): string => {
+export const resolvePath = (specifier: string, referrer: Path): Path => {
   if (specifier === "@") {
     return "@";
   }

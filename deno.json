@@ -1,0 +1,12 @@
+{
+    "imports": {
+        "/": "./hub/",
+        "./": "./",
+        "@": "./hub/@reframe/zero/zero/runtime.ts",
+        "@reframe/": "./hub/@reframe/"
+    },
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "https://esm.sh/react@canary"
+    }
+}

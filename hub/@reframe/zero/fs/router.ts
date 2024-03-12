@@ -1,40 +1,57 @@
-import { Readable, Writeable } from "../defs.ts";
+import { Path, Readable, Watchable, Writeable } from "../defs.ts";
 import { cleanPath } from "../utils/path.ts";
 import { createFs } from "./create.ts";
 
 // todo: router should have exact type, eg: { "/@": () => FS<X> }
-type RouterFS<C extends Readable | Writeable> = Readable & Writeable & {
-  mount: (path: `/${string}`, route: () => C) => RouterFS<C>;
-};
+type RouterFS<C extends Readable | Writeable | Watchable> =
+  & Readable
+  & Writeable
+  & Watchable
+  & {
+    mount: (path: Path, route: () => C) => RouterFS<C>;
+  };
 
-export const createRouterFs = <C extends Readable | Writeable>(
-  routes: Record<string, () => C> = {},
+export const createRouterFs = <C extends Readable | Writeable | Watchable>(
+  routes: Record<Path, () => C> = {},
 ): RouterFS<C> => {
-  const mounts = {} as Record<string, C>;
+  const mounts = {} as Record<Path, C>;
 
-  const getRoute = (path: string) => {
-    const key = Object.keys(routes).sort(
-      (a, b) =>
-        b.length === a.length ? b.localeCompare(a) : b.length - a.length,
-    ).find((key) =>
-      path === key ||
-      path.startsWith(key === "/" ? key : key + "/")
-    );
+  const getMounts = (paths: Path[]) => {
+    return paths.map((key) => {
+      if (!mounts[key]) {
+        mounts[key] = routes[key]();
+      }
 
-    if (!key) {
+      return [key, mounts[key]] as const;
+    });
+  };
+
+  const getAllMatchedRoutes = (path: Path) => {
+    const keys = (Object.keys(routes) as Path[])
+      .sort(
+        (a, b) =>
+          b.length === a.length ? b.localeCompare(a) : b.length - a.length,
+      ).filter((key) =>
+        path === key ||
+        path.startsWith(key === "/" ? key : key + "/")
+      );
+
+    return getMounts(keys);
+  };
+
+  const getRoute = (path: Path) => {
+    const matches = getAllMatchedRoutes(path);
+
+    if (matches.length === 0) {
       return null;
     }
 
-    if (!mounts[key]) {
-      mounts[key] = routes[key]();
-    }
-
-    return [key, mounts[key]] as const;
+    return matches[0]!;
   };
 
   const base = createFs((ctx) =>
     ctx
-      .read(async (path) => {
+      .read(async (path, headers) => {
         const match = getRoute(path);
 
         if (!match) {
@@ -51,7 +68,7 @@ export const createRouterFs = <C extends Readable | Writeable>(
           throw new Error(`route not readable: ${path}`);
         }
 
-        const response = await route.read(newPath);
+        const response = await route.read(newPath, headers);
         return response.setHeaders((headers) => ({
           "x-fs-router": key +
             " -> " + (headers["x-fs-router"] ?? newPath),
@@ -82,12 +99,32 @@ export const createRouterFs = <C extends Readable | Writeable>(
             "x-fs-router-path": path,
           }));
         },
-      )
+      ).watch((path, handler) => {
+        const matches = getMounts((
+          Object.keys(routes) as Path[]
+        ).filter((key) => key.startsWith(path)));
+
+        const cleanups = matches.map(([key, route]) => {
+          const newPath = cleanPath(path.slice(key.length));
+          if (("watch" in route)) {
+            return route.watch(newPath, (event) => {
+              handler({
+                ...event,
+                path: `${key}${event.path}`,
+              });
+            });
+          }
+        });
+
+        return () => {
+          cleanups.forEach((cleanup) => cleanup?.());
+        };
+      })
   );
 
   return {
     ...base,
-    mount: (path: `/${string}`, route: () => C) =>
+    mount: (path: Path, route: () => C) =>
       createRouterFs({
         ...routes,
         [path]: route,

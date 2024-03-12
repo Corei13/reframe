@@ -40,6 +40,9 @@ type Ctx<
   ) => Ctx<Read, Write, Transform, List, Watchable>;
 };
 
+const ensureStartsWithSlash = (path: string) =>
+  path.startsWith("/") ? path : `/${path}`;
+
 export const createFs = <C extends Ctx = Ctx>(
   factory: (ctx: Ctx) => C,
 ): C["handlers"] => {
@@ -60,12 +63,19 @@ export const createFs = <C extends Ctx = Ctx>(
 
     read: (read) =>
       helper<{ read: typeof read }, Write, Transform, List, Watch>(
-        { ...handlers, read },
+        {
+          ...handlers,
+          read: (path, headers) => read(ensureStartsWithSlash(path), headers),
+        },
       ),
 
     write: (write) =>
       helper<Read, { write: typeof write }, Transform, List, Watch>(
-        { ...handlers, write },
+        {
+          ...handlers,
+          write: (path, body, headers) =>
+            write(ensureStartsWithSlash(path), body, headers),
+        },
       ),
 
     list: (list) =>
