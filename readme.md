@@ -131,3 +131,10 @@ Initially, we create a Registry with a single Org for @reframe. We will have
 
 - Editor
   - analyze all errors on ast tree, and resolve them ahead of time
+
+---
+
+- deno task watch @dj/tinybird-demo/~@/@/main.ts
+- deno task run @dj/tinybird-demo/~@/@/main.ts
+- deno task build @dj/tinybird-demo/~@/@/main.ts
+- deno task deploy .build/@dj/tinybird-demo
