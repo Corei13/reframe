@@ -13,5 +13,11 @@
             "dom",
             "deno.ns"
         ]
+    },
+    "tasks": {
+        "watch": "cd hub; deno run --allow-all @reframe/zero/run.ts --watch=true",
+        "run": "cd hub; deno run --allow-all @reframe/zero/run.ts",
+        "build": "deno task run \"@reframe/one/~@/@/build.ts\"",
+        "deploy": "deno task run \"@reframe/one/~@/@/deploy.ts\""
     }
 }

@@ -1,4 +1,5 @@
 import { createRuntime } from "./runtime.ts";
+import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 
 const runtime = createRuntime(Deno.args);
 
@@ -19,13 +20,16 @@ console.log(
 );
 await hookRuntime.run();
 
-const listener = hookRuntime.fs.watch("/", async (event) => {
-  console.log("EVENT", event);
-  const root = await hookRuntime.temp_moduleCache.invalidate(event.path);
-  console.log("ROOT", event.path, root);
-  if (root) {
-    await hookRuntime.run(root);
-  }
-});
+const { watch } = parse(Deno.args);
 
+if (watch) {
+  const _listener = hookRuntime.fs.watch("/", async (event) => {
+    console.log("EVENT", event);
+    const root = await hookRuntime.temp_moduleCache.invalidate(event.path);
+    console.log("ROOT", event.path, root);
+    if (root) {
+      await hookRuntime.run(root);
+    }
+  });
+}
 export {};
