@@ -1,5 +1,6 @@
-import { createRuntime as createZeroRuntime } from "@reframe/zero/runtime.ts";
+import Runtime from "@";
+import { loadSync } from "https://deno.land/std@0.219.0/dotenv/mod.ts";
 
-export const createRuntime = (args: string[]) => {
-  return createZeroRuntime(args);
+export const createRuntime = () => {
+  return Runtime.extend({ env: loadSync() });
 };

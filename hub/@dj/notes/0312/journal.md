@@ -7,3 +7,12 @@ There are what I intend to do end of today,
   our database and clickhouse
 
 I will start with the second one.
+
+### break plans
+
+- yoga
+- eyes out
+- calving
+- plan next two weeks for platform and product
+
+## Analytics

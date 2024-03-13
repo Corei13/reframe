@@ -19,7 +19,7 @@ export function splitPath(path: string): string[] {
   );
 }
 
-export function cleanPath(path: string): `/${string}` {
+export function cleanPath(path: string): Path {
   return `/${splitPath(path).join("/")}`;
 }
 
@@ -93,7 +93,7 @@ export const normalizeSpecifier = (specifier: string): string => {
   return joinSpecifier(parts.loaders, parts.segments);
 };
 
-export const absolute = (specifier: string): string => {
+export const absolute = (specifier: string): Path => {
   if (specifier.startsWith(".") || specifier.startsWith("/")) {
     return absolute(normalizeSpecifier(specifier));
   }
@@ -110,18 +110,25 @@ export const resolvePath = (specifier: string, referrer: Path): Path => {
     return "@";
   }
 
-  // console.log(
-  //   "resolvePath",
-  //   specifier,
-  //   referrer,
-  //   absolute(mergeSpecifiers(referrer, specifier)),
-  // );
   // TODO: this is a hack, should be fixed with import maps
   if (specifier === "react" || specifier === "react-dom") {
     return resolvePath(specifier + "@canary", referrer);
   }
 
+  // handle importing https:// from npm: or another https://
+  // https://a.com -> https://b.com
+  const referrerParts = splitSpecifier(referrer);
+  if (
+    referrerParts.loaders.length > 0 &&
+    ["npm", "https", "http"].includes(referrerParts.loaders.at(-1)!) &&
+    (specifier.startsWith("https://") || specifier.startsWith("http://"))
+  ) {
+    return resolvePath(`..:${specifier}`, referrer);
+  }
+
   const resolved = absolute(mergeSpecifiers(referrer, specifier));
+
+  console.log("resolvePath", "from", referrer, "to", specifier, "=>", resolved);
 
   return resolved;
 };

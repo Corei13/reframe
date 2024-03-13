@@ -61,7 +61,9 @@ export const createGraphFs = <
 
         if (referrer) {
           updateGraph((graph) => {
-            graph[referrer].deps.push(path);
+            if (graph[referrer] && !graph[referrer].deps.includes(path)) {
+              graph[referrer].deps.push(path);
+            }
             return graph;
           });
         }

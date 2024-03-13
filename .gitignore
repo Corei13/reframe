@@ -8,3 +8,6 @@
 **/.run
 
 hub/*.ts
+
+.env
+**/.env

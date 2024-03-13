@@ -11,7 +11,20 @@ export default function serve(request: Request) {
 }
 
 // todo: make it Runtime.serve()
-const server = Deno.serve(serve);
+const server = Deno.serve({
+  onError: (error) => {
+    if (!(error instanceof Error)) {
+      return new Response("unknown error", {
+        status: 500,
+      });
+    }
+
+    return new Response(error.stack, {
+      status: 500,
+    });
+  },
+}, serve);
+
 Runtime.dev.onReload(async () => {
   await server.shutdown();
 });

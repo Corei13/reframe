@@ -30,6 +30,39 @@ export const parseArgs = (_args: string[]) => {
   return { org, name, entry: entry as Path };
 };
 
+export const createSomethingFs = <F extends Readable>(
+  rootFs: () => F,
+  { org, name }: {
+    org: string;
+    name: string;
+  },
+) => {
+  return createRouterFs()
+    .mount("/", () => createLocalFs("/"))
+    .mount("/@", () => createLocalFs(`/@${org}/${name}`))
+    .mount("/~@", () => createRunnableFs(rootFs()))
+    .mount(
+      "/~npm",
+      () =>
+        createCacheFs(
+          createNpmFs(),
+          createLocalFsWithHeaders("/.cache/npm", () => ({
+            content: ".content.mjs",
+            headers: ".headers.json",
+          })),
+        ),
+    )
+    .mount("/~http", () => createHttpFs({ ssl: false }))
+    .mount("/~https", () =>
+      createCacheFs(
+        createHttpFs({ ssl: true }),
+        createLocalFsWithHeaders("/.cache/https", () => ({
+          content: ".content.mjs",
+          headers: ".headers.json",
+        })),
+      ));
+};
+
 export function createRuntime(_args: string[]) {
   const { org, name, entry } = parseArgs(_args);
 
@@ -40,30 +73,7 @@ export function createRuntime(_args: string[]) {
       headers: ".headers.json",
     })),
     createCacheFs(
-      createRouterFs()
-        .mount("/", () => createLocalFs("/"))
-        .mount("/@", () => createLocalFs(`/@${org}/${name}`))
-        .mount("/~@", () => createRunnableFs(runFs))
-        .mount(
-          "/~npm",
-          () =>
-            createCacheFs(
-              createNpmFs(),
-              createLocalFsWithHeaders("/.cache/npm", () => ({
-                content: ".content.mjs",
-                headers: ".headers.json",
-              })),
-            ),
-        )
-        .mount("/~http", () => createHttpFs({ ssl: false }))
-        .mount("/~https", () =>
-          createCacheFs(
-            createHttpFs({ ssl: true }),
-            createLocalFsWithHeaders("/.cache/https", () => ({
-              content: ".content.mjs",
-              headers: ".headers.json",
-            })),
-          )),
+      createSomethingFs(() => runFs, { org, name }),
       createLocalFsWithHeaders(`/.run/@${org}/${name}`, () => ({
         content: ".content.mjs",
         headers: ".headers.json",

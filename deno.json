@@ -7,6 +7,11 @@
     },
     "compilerOptions": {
         "jsx": "react-jsx",
-        "jsxImportSource": "https://esm.sh/react@canary"
+        "jsxImportSource": "https://esm.sh/react@canary",
+        "lib": [
+            "esnext",
+            "dom",
+            "deno.ns"
+        ]
     }
 }
