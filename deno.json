@@ -2,7 +2,7 @@
     "imports": {
         "/": "./hub/",
         "./": "./",
-        "@": "./hub/@reframe/zero/zero/runtime.ts",
+        "@": "./hub/@reframe/zero/zero/runtime-factory.ts",
         "@reframe/": "./hub/@reframe/"
     },
     "compilerOptions": {
@@ -15,7 +15,7 @@
         ]
     },
     "tasks": {
-        "watch": "cd hub; deno run --allow-all @reframe/zero/run.ts --watch=true",
+        "watch": "cd hub; deno run --allow-all --watch @reframe/zero/run.ts --watch=true",
         "run": "cd hub; deno run --allow-all @reframe/zero/run.ts",
         "build": "deno task run \"@reframe/one/~@/@/build.ts\"",
         "deploy": "deno task run \"@reframe/one/~@/@/deploy.ts\""

@@ -493,6 +493,8 @@ function _setSessionId() {
   }
 
   document.cookie = cookieValue;
+
+  return sessionId;
 }
 
 /**
@@ -503,7 +505,7 @@ function _setSessionId() {
  * @return { object } request response
  */
 function _sendEvent(name: string, payload: Record<string, string>) {
-  _setSessionId();
+  const sessionId = _setSessionId();
 
   return fetch(src, {
     method: "POST",
@@ -514,7 +516,7 @@ function _sendEvent(name: string, payload: Record<string, string>) {
       timestamp: new Date().toISOString(),
       action: name,
       version: "1",
-      session_id: _getSessionId(),
+      session_id: sessionId,
       payload: JSON.stringify({ ...payload, ...globalAttributes }),
     }),
   });

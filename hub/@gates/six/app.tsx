@@ -1,5 +1,5 @@
 import React, { Suspense } from "npm:react@canary";
-import { type File, Files as Editor } from "./client.tsx";
+import { type File, Files as Editor } from "react-client:./client.tsx";
 
 const getFiles = async (base: string, limit: number) => {
   const paths: File[] = [];

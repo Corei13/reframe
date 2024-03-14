@@ -11,7 +11,7 @@ export async function Module(
     return null;
   }
 
-  const imports = response.header("x-fs-unmodule-imports")?.split(",").filter(
+  const imports = response.header("x-fs-runnable-imports")?.split(",").filter(
     (s) => s.length > 0,
   ) ??
     [];

@@ -1,43 +1,51 @@
-import type { Module, Readable } from "../../defs.ts";
-import { ModuleCache } from "../../module-cache.ts";
-import type { Runnable, Runtime } from "../runtime.ts";
+import type { Body } from "../../body.ts";
+import type { ModuleCache } from "../../module-cache.ts";
+import type { Module, Path, Readable } from "../../defs.ts";
+import type { Runnable, RuntimeFactory } from "../runtime-factory.ts";
 
 export const createDynamicImporter = <
   F extends Readable,
-  R extends Runtime<F, {}>,
->(
-  moduleCache: ModuleCache,
-) =>
-(runtime: R) => {
-  return ((
-    specifier: string,
-  ) => {
+  T extends {
+    path: Path;
+    fs: F;
+    module: ModuleCache;
+    resolve: (specifier: string, referrer: Path) => Path;
+    evaluate: <M>(content: Body) => Promise<M>;
+  },
+>(factory: RuntimeFactory<T>) => {
+  return ((specifier: string) => {
+    // todo: throw error on browser
+    if (specifier.startsWith("node:")) {
+      return import(specifier);
+    }
+
+    const runtime = factory();
+    console.log("importing", specifier, runtime.requestCounter);
+
     if (specifier === "@") {
-      // todo: move this to extend()
       return Promise.resolve({
         default: {
           ...runtime,
 
           dev: {
-            onReload: (fn: () => Promise<void>) => {
-              moduleCache.onReload(runtime.meta.path, fn);
-            },
+            onReload: (fn: () => Promise<void>) =>
+              runtime.module.onReload(runtime.path, fn),
           },
         },
         __esModule: true,
       });
     }
 
-    // todo: throw error on browser
-    if (specifier.startsWith("node:")) {
-      return import(specifier);
-    }
+    const path = runtime.resolve(specifier, runtime.path);
 
-    const path = runtime.resolve(specifier, runtime.meta.path);
-    console.log("I am here with", path);
-
-    if (moduleCache.has(path)) {
-      return moduleCache.get(path)!;
+    console.log("importing", path, runtime.reqestId);
+    if (
+      runtime.module.has(path) && (
+        !runtime.requestId ||
+        runtime.module.get(path)?.__requestId === runtime.requestId
+      )
+    ) {
+      return runtime.module.get(path)!;
     }
 
     const sourcePromise = runtime.fs.read(path, {});
@@ -46,10 +54,23 @@ export const createDynamicImporter = <
     );
 
     const modulePromise = runnablePromise.then((moduleFn) =>
-      moduleFn.default(runtime.meta.setPath(path))
+      Object.assign(
+        moduleFn.default(
+          runtime.extend(() => ({ path, importer: runtime.path })),
+        ),
+        {
+          __esModule: true,
+        },
+      )
     );
 
-    moduleCache.set(path, modulePromise, runtime.meta.path);
+    runtime.module.set(
+      path,
+      Object.assign(modulePromise, {
+        __requestId: runtime.requestId,
+      }),
+      runtime.path,
+    );
 
     return modulePromise;
   });

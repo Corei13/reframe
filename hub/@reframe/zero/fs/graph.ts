@@ -22,9 +22,36 @@ const readGraphFile = (dir: `/${string}`) => {
   }
 };
 
-const writeGraphFile = (dir: `/${string}`, graph: Graph) => {
-  ensureDirSync(Deno.cwd() + dir);
-  Deno.writeTextFileSync(jsonPath(dir), JSON.stringify(graph, null, 2));
+export const createGraph = (dir: Path) => {
+  const graph = {
+    timestamp: new Date(),
+    current: readGraphFile(dir),
+    read: () => {
+      graph.current = readGraphFile(dir);
+      return graph;
+    },
+    update: (update?: (_: Graph) => Graph) => {
+      if (update) {
+        graph.current = update(graph.current);
+      }
+
+      // update only once every 100ms
+      if (new Date().getTime() - graph.timestamp.getTime() > 100) {
+        graph.timestamp = new Date();
+        graph.write();
+      }
+    },
+
+    write: () => {
+      ensureDirSync(Deno.cwd() + dir);
+      Deno.writeTextFileSync(
+        jsonPath(dir),
+        JSON.stringify(graph.current, null, 2),
+      );
+
+      return graph;
+    },
+  };
 
   return graph;
 };
@@ -33,37 +60,27 @@ export const createGraphFs = <
   S extends Readable & Writeable,
   C extends Readable & Writeable & (Watchable | {}),
 >(
-  dir: `/${string}`,
+  graph: ReturnType<typeof createGraph>,
   db: S,
   compute: C,
 ) => {
-  const graph = {
-    current: readGraphFile(dir),
-    timestamp: new Date(),
-  };
-
-  const updateGraph = (update?: (_: Graph) => Graph) => {
-    if (update) {
-      graph.current = update(graph.current);
-    }
-
-    // update only once every 100ms
-    if (new Date().getTime() - graph.timestamp.getTime() > 100) {
-      graph.timestamp = new Date();
-      writeGraphFile(dir, graph.current);
-    }
-  };
-
   const fs = createFs((ctx) =>
     ctx
       .read(async (path, headers) => {
         const referrer = headers["x-fs-graph-referrer"] as Path | undefined;
-
+        console.log("[GRAPH] READ", path, referrer);
         if (referrer) {
-          updateGraph((graph) => {
-            if (graph[referrer] && !graph[referrer].deps.includes(path)) {
+          graph.update((graph) => {
+            graph[referrer] ??= {
+              hash: "",
+              fresh: false,
+              deps: [],
+            };
+
+            if (!graph[referrer].deps.includes(path)) {
               graph[referrer].deps.push(path);
             }
+            console.log("DEPS", graph[referrer]);
             return graph;
           });
         }
@@ -94,7 +111,7 @@ export const createGraphFs = <
 
         await db.write(`/${hash}`, content, resource.headers);
 
-        updateGraph((graph) => {
+        graph.update((graph) => {
           graph[path].hash = hash;
           graph[path].fresh = true;
           return graph;
@@ -139,7 +156,7 @@ export const createGraphFs = <
           deps: [],
         };
 
-        updateGraph();
+        graph.update();
 
         return db.write(`/${hash}`, content, {
           ...headers,

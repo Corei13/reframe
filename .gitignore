@@ -11,3 +11,6 @@ hub/*.ts
 
 .env
 **/.env
+
+.venv
+**/.venv

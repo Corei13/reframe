@@ -1,5 +1,4 @@
 import { Base, FS } from "../../ctx/ctx.ts";
-import { joinSpecifier } from "../../utils/path.ts";
 import { splitSpecifier } from "../../utils/path.ts";
 import { createFs } from "../lib/create.ts";
 

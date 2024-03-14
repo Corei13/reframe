@@ -7,7 +7,7 @@ import { Module } from "./module.tsx";
 export const render = async (element: ReactElement) => {
   const bootstrap = await Reframe.hydrate.server.getOnce(
     "/~@/@reframe/react/bootstrap/runtime.ts",
-  ).text();
+  ).then((response) => response.text());
 
   if (!bootstrap.startsWith("export default ")) {
     throw new Error("bootstrap must be a default export");

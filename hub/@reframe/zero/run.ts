@@ -5,19 +5,19 @@ const runtime = createRuntime(Deno.args);
 
 const { createRuntime: createHookRuntime } = await runtime
   .import<{
-    createRuntime: (args: string[]) => typeof runtime;
+    createRuntime: () => typeof runtime;
   }>("/@/runtime.ts");
 
-// we send the full args to the hook runtime, it's up to the hook to parse them and send down the relevant ones
-const hookRuntime = createHookRuntime(Deno.args)
-  .meta.setEntry(runtime.meta.entry);
+let hookRuntime = createHookRuntime()
+  .extend(() => ({ path: runtime.path }));
 
 console.log(
   "hookRuntime",
-  hookRuntime.meta,
+  hookRuntime,
   Deno.args,
-  runtime.meta,
+  runtime,
 );
+
 await hookRuntime.run();
 
 const { watch } = parse(Deno.args);
@@ -25,11 +25,13 @@ const { watch } = parse(Deno.args);
 if (watch) {
   const _listener = hookRuntime.fs.watch("/", async (event) => {
     console.log("EVENT", event);
-    const root = await hookRuntime.temp_moduleCache.invalidate(event.path);
+    const root = await hookRuntime.module.invalidate(event.path);
+
     console.log("ROOT", event.path, root);
     if (root) {
       await hookRuntime.run(root);
     }
   });
 }
+
 export {};
