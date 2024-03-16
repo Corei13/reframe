@@ -1,52 +1,57 @@
-import React, { Suspense } from "npm:react@canary";
-import { render } from "@reframe/react/server.tsx";
-import { Style } from "@reframe/react/module.tsx";
+import Runtime from "@";
+import { createModuleCache } from "@reframe/zero/module-cache.ts";
 
-import App from "./app.tsx";
+const server = Deno.serve(
+  {
+    onError: (error) => {
+      if (error instanceof Error) {
+        return new Response(error.stack, { status: 500 });
+      }
 
-const Shell = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <html>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body>
-        <Suspense>{children}</Suspense>
-      </body>
-    </html>
-  );
-};
+      return new Response(JSON.stringify(error), { status: 500 });
+    },
+  },
+  async (request) => {
+    const cache = new Set<string>();
+    const requestId = crypto.randomUUID();
+    const requestRuntime = Runtime
+      // .extend(() => ({
+      //   module: createModuleCache(),
+      // }))
+      .extend((factory) => ({
+        requestId,
+        request,
+        hydrate: {
+          server: {
+            getOnce: (specifier: string) => {
+              console.log("getOnce17", specifier, requestRuntime.requestId);
+              if (cache.has(specifier)) {
+                return null;
+              }
 
-export default function serve(request: Request) {
-  const url = new URL(request.url);
-  const partial = url.pathname !== "/";
-  const element = !partial
-    ? (
-      <Shell>
-        <Style path={"/~tw/~@" + import.meta.path} />
-        <div className="w-[200px] h-[200px] bg-primary-100 rounded-[10px]">
-          tailwind
-        </div>
-        <App path={url.pathname} />
-      </Shell>
-    )
-    : (
-      <div>
-        <App path={url.pathname} />
-      </div>
+              return requestRuntime.hydrate.server.get(specifier);
+            },
+            get: (specifier: string) => {
+              console.log("[get]", specifier, requestRuntime.requestId);
+              cache.add(specifier);
+              return requestRuntime.fs.read(specifier, {});
+            },
+            has: (specifier: string) => cache.has(specifier),
+          },
+        },
+      }));
+
+    console.log("requestRuntime START", requestRuntime.requestId);
+    const { default: server } = await requestRuntime.import("/@/server.tsx");
+    console.log(
+      "requestRuntime STOP",
+      requestRuntime.requestId,
     );
 
-  return render(element);
-}
+    return server(request);
+  },
+);
 
-if (import.meta.main) {
-  Deno.serve(
-    { port: 8082 },
-    serve,
-  );
-}
+Runtime.dev.onReload(async () => {
+  await server.shutdown();
+});
