@@ -16,6 +16,9 @@ export const createDynamicImporter = <
   return ((specifier: string) => {
     // todo: throw error on browser
     if (specifier.startsWith("node:")) {
+      if (typeof window !== "undefined" && typeof Deno === "undefined") {
+        return Promise.resolve({});
+      }
       return import(specifier);
     }
 
@@ -38,7 +41,11 @@ export const createDynamicImporter = <
 
     const path = runtime.resolve(specifier, runtime.path);
 
-    console.log("importing", path, runtime.reqestId);
+    // console.log(
+    //   "importing",
+    //   path,
+    //   runtime.requestId ? "req-id" + runtime.requestId : "",
+    // );
     if (
       runtime.module.has(path) && (
         !runtime.requestId ||
@@ -49,20 +56,23 @@ export const createDynamicImporter = <
     }
 
     const sourcePromise = runtime.fs.read(path, {});
+
     const runnablePromise = sourcePromise.then((source) =>
       runtime.evaluate<Module<{ default: Runnable }>>(source)
     );
 
     const modulePromise = runnablePromise.then((moduleFn) =>
-      Object.assign(
-        moduleFn.default(
-          runtime.extend(() => ({ path, importer: runtime.path })),
-        ),
-        {
+      moduleFn.default(
+        runtime.extend(() => ({ path, importer: runtime.path })),
+      ).then((module) =>
+        Object.assign(module, {
           __esModule: true,
-        },
+        })
       )
-    );
+    ).catch((err) => {
+      console.error(`[${path}] <- [${runtime.path}]`, err.message);
+      throw err;
+    });
 
     runtime.module.set(
       path,

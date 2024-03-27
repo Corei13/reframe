@@ -1,10 +1,10 @@
-import { KpiTotals, KpiType, KPI_OPTIONS } from '../../lib/types/kpis'
+import { KPI_OPTIONS, KpiTotals, KpiType } from "../../lib/types/kpis.ts";
 
 type KpisTabsProps = {
-  value: KpiType
-  onChange: (kpi: KpiType) => void
-  totals?: KpiTotals
-}
+  value: KpiType;
+  onChange: (kpi: KpiType) => void;
+  totals?: KpiTotals;
+};
 
 export default function KpisTabs({
   onChange,
@@ -21,7 +21,7 @@ export default function KpisTabs({
           key={value}
           role="tab"
           aria-selected={selectedKpi === value}
-          data-state={value === selectedKpi ? 'active' : undefined}
+          data-state={value === selectedKpi ? "active" : undefined}
           className="relative cursor-pointer p-6 md:p-9 text-left md:text-center text-secondary hover:bg-primaryLight transition-colors sm:state-active:border-b-4 sm:state-active:border-primary state-active:text-primary sm:mb-2"
           onClick={() => onChange(value)}
         >
@@ -33,12 +33,12 @@ export default function KpisTabs({
               className="text-neutral-64 text-left font-normal"
               aria-hidden={true}
             >
-              {totals ? formatter(totals[value]) : '-'}
+              {totals ? formatter(totals[value]) : "-"}
             </span>
           </div>
           <div className="hidden sm:block arrow absolute h-3 w-3 bg-primary -bottom-5" />
         </button>
       ))}
     </div>
-  )
+  );
 }

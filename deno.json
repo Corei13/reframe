@@ -2,7 +2,7 @@
     "imports": {
         "/": "./hub/",
         "./": "./",
-        "@": "./hub/@reframe/zero/zero/runtime-factory.ts",
+        "@": "./hub/@reframe/zero/base-runtime.ts",
         "@reframe/": "./hub/@reframe/"
     },
     "compilerOptions": {

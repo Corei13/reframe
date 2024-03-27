@@ -1,1 +1,1 @@
-export { default } from './KpisWidget'
+export { default } from "./KpisWidget.tsx";

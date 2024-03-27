@@ -1,23 +1,22 @@
-import { useRouter } from 'next/router'
+import { useRouter } from "next:router";
 
-import { Button } from '@tremor/react'
-import { useAnalytics } from './Provider'
-import Modal from './Modal'
-import { colors } from '../styles/theme'
+import { Button } from "npm:@tremor/react@2.0.2";
+import { useAnalytics } from "./Provider.tsx";
+import Modal from "./Modal.tsx";
 
 export default function ErrorModal() {
-  const router = useRouter()
-  const { error, setError } = useAnalytics()
+  const router = useRouter();
+  const { error, setError } = useAnalytics();
 
   const handleClose = () => {
-    setError(null)
-    router.push('/', {
+    setError(null);
+    router.push("/", {
       query: {
         ...router.query,
         token: null,
       },
-    })
-  }
+    });
+  };
 
   return (
     <Modal isOpen={!!error} onClose={handleClose}>
@@ -30,7 +29,7 @@ export default function ErrorModal() {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <rect width="16" height="16" rx="8" fill={colors.error} />
+            <rect width="16" height="16" rx="8" fill="red" />
             <path
               fillRule="evenodd"
               clipRule="evenodd"
@@ -42,10 +41,12 @@ export default function ErrorModal() {
         </span>
         <Modal.Title className="text-2xl">
           {error?.message
-            ? `${error.message.charAt(0).toUpperCase()}${error.message.slice(
-                1
-              )}`
-            : 'Something went wrong'}
+            ? `${error.message.charAt(0).toUpperCase()}${
+              error.message.slice(
+                1,
+              )
+            }`
+            : "Something went wrong"}
         </Modal.Title>
         <div className="my-8">
           <Modal.Description>
@@ -68,5 +69,5 @@ export default function ErrorModal() {
         </div>
       </Modal.Content>
     </Modal>
-  )
+  );
 }

@@ -1,28 +1,29 @@
 const createMinimalRuntime = async () => {
+  const moduleCache = new Map();
+
   const importFromDom = async (
     specifier: string,
     runtime?: ReturnType<typeof Runtime>,
   ) => {
-    const script = globalThis.document.querySelector(
-      `script[data-path="${specifier}"]`,
-    );
-
-    if (!script) {
-      throw new Error(`module not found: ${specifier}`);
+    if (moduleCache.has(specifier)) {
+      return moduleCache.get(specifier)!;
     }
 
-    const code = script.textContent;
+    const code = await self.__reframe.modules.source.get(specifier);
     const url = URL.createObjectURL(
       new Blob([code], { type: "application/javascript" }),
     );
     const unmodule = await import(url);
 
-    URL.revokeObjectURL(url);
-    return await unmodule.default(runtime);
+    const module = await unmodule.default(runtime);
+    // URL.revokeObjectURL(url);
+
+    moduleCache.set(specifier, module);
+    return module;
   };
 
   const { resolvePath } = await importFromDom(
-    "/~@/@reframe/core/utils/path.ts",
+    "/~@/@reframe/zero/utils/path.ts",
   );
 
   const resolve = (specifier: string, referrer: string) => {
@@ -61,7 +62,7 @@ declare global {
   }
 }
 
-const { ctx, runtime, hydrate } = await MinimalRuntime(`@:${import.meta.path}`)
+const { hydrate } = await MinimalRuntime(`@:${import.meta.path}`)
   .import("./initialize.ts");
 
 await hydrate();

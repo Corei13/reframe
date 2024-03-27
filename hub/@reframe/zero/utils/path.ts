@@ -107,7 +107,7 @@ export const absolute = (specifier: string): Path => {
 
 export const resolvePath = (specifier: string, referrer: Path): Path => {
   if (specifier === "@") {
-    return "@";
+    return "/@";
   }
 
   // TODO: this is a hack, should be fixed with import maps
@@ -120,15 +120,19 @@ export const resolvePath = (specifier: string, referrer: Path): Path => {
   const referrerParts = splitSpecifier(referrer);
   if (
     referrerParts.loaders.length > 0 &&
-    ["npm", "https", "http"].includes(referrerParts.loaders.at(-1)!) &&
-    (specifier.startsWith("https://") || specifier.startsWith("http://"))
+    ["npm", "rsc", "https", "http"].includes(referrerParts.loaders.at(-1)!) &&
+    (
+      specifier.startsWith("https://") ||
+      specifier.startsWith("http://") ||
+      specifier.startsWith("node:")
+    )
   ) {
     return resolvePath(`..:${specifier}`, referrer);
   }
 
   const resolved = absolute(mergeSpecifiers(referrer, specifier));
 
-  console.log("resolvePath", "from", referrer, "to", specifier, "=>", resolved);
+  // console.log("resolvePath", "from", referrer, "to", specifier, "=>", resolved);
 
   return resolved;
 };

@@ -1,6 +1,4 @@
-import dynamic, { LoaderComponent } from 'next/dynamic'
-import InView from './InView'
-import Widget from './Widget'
+import InView from "./InView.tsx";
 
 const enum WidgetHeight {
   XLarge = 588,
@@ -9,27 +7,13 @@ const enum WidgetHeight {
   Small = 216,
 }
 
-function lazyLoadWidget(
-  importPromise: () => LoaderComponent,
-  loaderSize?: number
-) {
-  return dynamic(importPromise, {
-    loading: () => (
-      <Widget>
-        <Widget.Content status="loading" loaderSize={loaderSize} />
-      </Widget>
-    ),
-    ssr: false,
-  })
-}
-
-const KPIsWidget = lazyLoadWidget(() => import('./KpisWidget'), 80)
-const BrowsersWidget = lazyLoadWidget(() => import('./BrowsersWidget'))
-const TopPagesWidget = lazyLoadWidget(() => import('./TopPagesWidget'))
-const TrendWidget = lazyLoadWidget(() => import('./TrendWidget'), 40)
-const TopDevicesWidget = lazyLoadWidget(() => import('./TopDevicesWidget'))
-const TopSourcesWidget = lazyLoadWidget(() => import('./TopSourcesWidget'))
-const TopLocationsWidget = lazyLoadWidget(() => import('./TopLocationsWidget'))
+import KPIsWidget from "./KpisWidget/index.ts";
+import BrowsersWidget from "./BrowsersWidget/index.ts";
+import TopPagesWidget from "./TopPagesWidget/index.ts";
+import TrendWidget from "./TrendWidget/index.ts";
+import TopDevicesWidget from "./TopDevicesWidget/index.ts";
+import TopSourcesWidget from "./TopSourcesWidget/index.ts";
+import TopLocationsWidget from "./TopLocationsWidget/index.ts";
 
 export default function Widgets() {
   return (
@@ -62,5 +46,5 @@ export default function Widgets() {
         </InView>
       </div>
     </div>
-  )
+  );
 }

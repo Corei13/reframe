@@ -1,1 +1,1 @@
-export { default } from './TrendWidget'
+export { default } from "./TrendWidget.tsx";

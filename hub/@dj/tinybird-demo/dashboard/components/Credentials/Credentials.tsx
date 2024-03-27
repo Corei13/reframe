@@ -1,18 +1,18 @@
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
-import Modal from '../Modal'
-import CredentialsForm from './CredentialsForm'
+import { useRouter } from "next:router";
+import { useEffect, useState } from "npm:react@canary";
+import Modal from "../Modal.tsx";
+import CredentialsForm from "./CredentialsForm.tsx";
 
 export default function Credentials() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
-  const { isReady } = useRouter()
+  const { isReady } = useRouter();
 
   useEffect(() => {
-    if (!isReady) return
-    setIsOpen(true)
-    return () => setIsOpen(false)
-  }, [isReady])
+    if (!isReady) return;
+    setIsOpen(true);
+    return () => setIsOpen(false);
+  }, [isReady]);
 
   return (
     <Modal isOpen={isOpen} onClose={() => undefined}>
@@ -26,5 +26,5 @@ export default function Credentials() {
         <CredentialsForm />
       </Modal.Content>
     </Modal>
-  )
+  );
 }

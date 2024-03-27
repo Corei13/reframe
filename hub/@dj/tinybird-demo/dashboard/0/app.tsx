@@ -1,26 +1,17 @@
-/* eslint-disable @next/next/no-img-element */
-import Script from 'next/script'
-import Header from '../components/Header'
-import Footer from '../components/Footer'
-import Widgets from '../components/Widgets'
-import Credentials from '../components/Credentials'
-import useAuth from '../lib/hooks/use-auth'
-import Meta from '../components/Meta'
-import ErrorModal from '../components/ErrorModal'
-import config from '../lib/config'
+import AnalyticsProvider from "../components/Provider.tsx";
+import Header from "../components/Header.tsx";
+import Footer from "../components/Footer.tsx";
+import Widgets from "../components/Widgets.tsx";
+import Credentials from "../components/Credentials/index.ts";
+import useAuth from "../lib/hooks/use-auth.ts";
+import Meta from "../components/Meta.tsx";
+import ErrorModal from "../components/ErrorModal.tsx";
 
 export default function DashboardPage() {
-  const { isAuthenticated, isTokenValid } = useAuth()
+  const { isAuthenticated, isTokenValid } = useAuth();
 
   return (
-    <>
-      {process.env.NODE_ENV === 'production' && (
-        <Script
-          defer
-          src="https://unpkg.com/@tinybirdco/flock.js"
-          data-token={config.trackerToken}
-        />
-      )}
+    <AnalyticsProvider>
       <Meta />
       <div className="min-h-screen px-5 py-5 text-sm leading-5 bg-body sm:px-10 text-secondary">
         <div className="mx-auto max-w-7xl">
@@ -44,6 +35,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </>
-  )
+    </AnalyticsProvider>
+  );
 }

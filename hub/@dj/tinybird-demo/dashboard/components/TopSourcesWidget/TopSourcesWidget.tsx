@@ -1,20 +1,20 @@
-import { BarList } from '@tremor/react'
-import Widget from '../Widget'
-import useTopSources from '../../lib/hooks/use-top-sources'
-import { formatNumber } from '../../lib/utils'
-import { useMemo } from 'react'
+import { BarList } from "npm:@tremor/react@2.0.2";
+import Widget from "../Widget.tsx";
+import useTopSources from "../../lib/hooks/use-top-sources.ts";
+import { formatNumber } from "../../lib/utils.ts";
+import { useMemo } from "npm:react@canary";
 
 export default function TopSourcesWidget() {
-  const { data, status, warning } = useTopSources()
+  const { data, status, warning } = useTopSources();
   const chartData = useMemo(
     () =>
-      (data?.data ?? []).map(d => ({
+      (data?.data ?? []).map((d) => ({
         name: d.referrer,
         value: d.visits,
         href: d.href,
       })),
-    [data?.data]
-  )
+    [data?.data],
+  );
 
   return (
     <Widget>
@@ -33,7 +33,7 @@ export default function TopSourcesWidget() {
           </div>
 
           <div className="col-span-4">
-            <BarList data={chartData} valueFormatter={_ => ''} />
+            <BarList data={chartData} valueFormatter={(_) => ""} />
           </div>
           <div className="flex flex-col col-span-1 row-span-4 gap-2">
             {(data?.data ?? []).map(({ referrer, visits }) => (
@@ -48,5 +48,5 @@ export default function TopSourcesWidget() {
         </div>
       </Widget.Content>
     </Widget>
-  )
+  );
 }

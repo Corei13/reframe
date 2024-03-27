@@ -1,7 +1,7 @@
-import { Dialog } from '@headlessui/react'
-import { forwardRef, HTMLAttributes } from 'react'
+import { Dialog } from "npm:@headlessui/react";
+import { forwardRef, HTMLAttributes } from "npm:react@canary";
 
-import { cx } from '../lib/utils'
+import { cx } from "../lib/utils.ts";
 
 const ModalTitle = forwardRef<
   HTMLHeadingElement,
@@ -10,14 +10,14 @@ const ModalTitle = forwardRef<
   return (
     <Dialog.Title
       ref={ref}
-      className={cx('text-lg font-medium mb-2', className)}
+      className={cx("text-lg font-medium mb-2", className)}
       {...props}
     >
       {children}
     </Dialog.Title>
-  )
-})
-ModalTitle.displayName = 'ModalTitle'
+  );
+});
+ModalTitle.displayName = "ModalTitle";
 
 const ModalDescription = forwardRef<
   HTMLParagraphElement,
@@ -26,14 +26,14 @@ const ModalDescription = forwardRef<
   return (
     <Dialog.Description
       ref={ref}
-      className={cx('text-sm mb-5', className)}
+      className={cx("text-sm mb-5", className)}
       {...props}
     >
       {children}
     </Dialog.Description>
-  )
-})
-ModalDescription.displayName = 'ModalDescription'
+  );
+});
+ModalDescription.displayName = "ModalDescription";
 
 const ModalContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
@@ -41,23 +41,23 @@ const ModalContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
       <Dialog.Panel
         ref={ref}
         className={cx(
-          'bg-white rounded-xl h-auto w-full max-w-2xl mx-auto px-10 py-9 flex flex-col',
-          className
+          "bg-white rounded-xl h-auto w-full max-w-2xl mx-auto px-10 py-9 flex flex-col",
+          className,
         )}
         {...props}
       >
         {children}
       </Dialog.Panel>
-    )
-  }
-)
-ModalContent.displayName = 'ModalDescription'
+    );
+  },
+);
+ModalContent.displayName = "ModalDescription";
 
 type ModalProps = {
-  children: React.ReactNode
-  isOpen: boolean
-  onClose: () => void
-}
+  children: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+};
 
 function Modal({ children, isOpen, onClose }: ModalProps) {
   return (
@@ -70,11 +70,11 @@ function Modal({ children, isOpen, onClose }: ModalProps) {
         {children}
       </div>
     </Dialog>
-  )
+  );
 }
 
 export default Object.assign(Modal, {
   Title: ModalTitle,
   Description: ModalDescription,
   Content: ModalContent,
-})
+});

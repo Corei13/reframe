@@ -9,5 +9,6 @@
     "~*",
     "**/~*"
   ],
-  "editor.wordWrap": "on"
+  "editor.wordWrap": "on",
+  "terminal.integrated.scrollback": 20000
 }

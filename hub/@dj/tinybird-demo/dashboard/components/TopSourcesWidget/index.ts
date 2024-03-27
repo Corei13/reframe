@@ -1,1 +1,1 @@
-export { default } from './TopSourcesWidget'
+export { default } from "./TopSourcesWidget.tsx";

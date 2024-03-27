@@ -99,6 +99,12 @@ export const createRuntime = <C extends Base>(
     import: <M extends Module<unknown, unknown>>(
       specifier: string,
     ): Promise<M> => {
+      if (
+        typeof window !== "undefined" && typeof Deno === "undefined" &&
+        specifier.startsWith("node:")
+      ) {
+        return Promise.resolve({} as M);
+      }
       const resolved = Runtime.resolve(specifier, entry);
 
       if (!Runtime.cache.module.has(resolved)) {

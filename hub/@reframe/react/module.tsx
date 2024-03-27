@@ -12,7 +12,7 @@ export async function Module(
   }
 
   const imports = response.header("x-fs-runnable-imports")?.split(",").filter(
-    (s) => s.length > 0,
+    (s) => s.length > 0 && !s.startsWith("node:"),
   ) ??
     [];
 
@@ -28,6 +28,7 @@ export async function Module(
         type={"reframe/module"}
         data-path={resolvedPath}
         data-referrer={referrer}
+        data-imports={imports.join(",")}
         dangerouslySetInnerHTML={{
           __html: await response.text(),
         }}
@@ -39,9 +40,9 @@ export async function Module(
 }
 
 export async function Style(
-  { path }: { path: string },
+  { path }: { path: `/${string}` },
 ) {
-  const response = await Reframe.hydrate.server.getOnce(path);
+  const response = await Reframe.fs.read(path, {});
 
   if (!response) {
     return null;

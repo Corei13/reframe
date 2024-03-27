@@ -14,11 +14,10 @@ import { createNpmFs } from "./fs/npm.ts";
 import { createRouterFs } from "./fs/router.ts";
 import { createRunnableFs } from "./fs/runnable.ts";
 import { createDynamicImporter } from "./zero/importer/dynamic.ts";
-import { evaluate } from "./zero/evaluator/data-url.ts";
-import { resolvePath } from "./utils/path.ts";
 import { parse } from "https://deno.land/std@0.200.0/flags/mod.ts";
 import { createModuleCache } from "./module-cache.ts";
-import { createBaseRuntime, InferFactory } from "./zero/runtime-factory.ts";
+import { InferFactory } from "./zero/runtime-factory.ts";
+import { createBaseRuntime } from "./base-runtime.ts";
 
 export const parseArgs = (_args: string[]) => {
   const args = parse(_args, {});
@@ -52,8 +51,30 @@ export const createInnerFs = <F extends Readable>(
       "/~npm",
       () =>
         createCacheFs(
-          createNpmFs(),
+          createNpmFs({
+            //     url.searchParams.set("target", "denonext");
+            // url.searchParams.set("external", "react,react-dom");
+            target: "denonext",
+            external: "react,react-dom",
+          }),
           createLocalFsWithHeaders("/.cache/npm", () => ({
+            content: ".content.mjs",
+            headers: ".headers.json",
+          })),
+        ),
+    )
+    .mount(
+      "/~rsc",
+      () =>
+        createCacheFs(
+          createNpmFs({
+            //     url.searchParams.set("target", "denonext");
+            // url.searchParams.set("external", "react,react-dom");
+            target: "denonext",
+            external: "react,react-dom",
+            conditions: "react-server",
+          }),
+          createLocalFsWithHeaders("/.cache/rsc", () => ({
             content: ".content.mjs",
             headers: ".headers.json",
           })),
@@ -110,20 +131,16 @@ export function createRuntime(_args: string[]) {
 
   const moduleCache = createModuleCache();
 
-  const base = createBaseRuntime()
-    .extend(() => ({
+  const base = createBaseRuntime<Readable & Writeable & Watchable>({
+    entry: {
+      org,
+      name,
       path: entry,
-      entry: {
-        org,
-        name,
-        path: entry,
-      },
-      module: moduleCache,
-      args: _args,
-      fs: outerFs,
-      resolve: resolvePath,
-      evaluate,
-    }))
+    },
+    moduleCache,
+    args: _args,
+    fs: outerFs,
+  })
     .extend((factory) => ({
       setImporter: (
         _importer: (

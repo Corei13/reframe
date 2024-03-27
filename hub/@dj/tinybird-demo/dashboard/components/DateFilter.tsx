@@ -1,40 +1,43 @@
-import { Popover } from '@headlessui/react'
-import { DateRangePicker } from '@tremor/react'
-import moment from 'moment'
-import { QuestionIcon } from './Icons'
+import { Popover } from "npm:@headlessui/react";
+import { DateRangePicker } from "npm:@tremor/react@2.0.2";
+import moment from "npm:moment";
+import { QuestionIcon } from "./Icons.tsx";
 
 import {
   DateFilter as DateFilterType,
   DateRangePickerOption,
-} from '../lib/types/date-filter'
-import useDateFilter from '../lib/hooks/use-date-filter'
+} from "../lib/types/date-filter.ts";
+import useDateFilter from "../lib/hooks/use-date-filter.ts";
+
+console.log("DateFilter", DateFilterType);
 
 const dateFilterOptions: DateRangePickerOption[] = [
-  { text: 'Today', value: DateFilterType.Today, startDate: new Date() },
+  { text: "Today", value: DateFilterType.Today, startDate: new Date() },
   {
-    text: 'Yesterday',
+    text: "Yesterday",
     value: DateFilterType.Yesterday,
-    startDate: moment().subtract(1, 'days').toDate(),
+    startDate: moment().subtract(1, "days").toDate(),
   },
   {
-    text: '7 days',
+    text: "7 days",
     value: DateFilterType.Last7Days,
-    startDate: moment().subtract(7, 'days').toDate(),
+    startDate: moment().subtract(7, "days").toDate(),
   },
   {
-    text: '30 days',
+    text: "30 days",
     value: DateFilterType.Last30Days,
-    startDate: moment().subtract(30, 'days').toDate(),
+    startDate: moment().subtract(30, "days").toDate(),
   },
   {
-    text: '12 months',
+    text: "12 months",
     value: DateFilterType.Last12Months,
-    startDate: moment().subtract(12, 'months').toDate(),
+    startDate: moment().subtract(12, "months").toDate(),
   },
-]
+];
 
 export default function DateFilter() {
-  const { dateRangePickerValue, onDateRangePickerValueChange } = useDateFilter()
+  const { dateRangePickerValue, onDateRangePickerValueChange } =
+    useDateFilter();
 
   return (
     <div className="flex items-center gap-4">
@@ -58,5 +61,5 @@ export default function DateFilter() {
         />
       </div>
     </div>
-  )
+  );
 }

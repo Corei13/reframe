@@ -1,28 +1,28 @@
-import Widget from '../Widget'
-import useTopPages from '../../lib/hooks/use-top-pages'
-import { BarList } from '@tremor/react'
-import { useMemo } from 'react'
-import { cx, formatNumber } from '../../lib/utils'
-import { TopPagesSorting } from '../../lib/types/top-pages'
-import useParams from '../../lib/hooks/use-params'
-import useDomain from '../../lib/hooks/use-domain'
+import Widget from "../Widget.tsx";
+import useTopPages from "../../lib/hooks/use-top-pages.ts";
+import { BarList } from "npm:@tremor/react@2.0.2";
+import { useMemo } from "npm:react@canary";
+import { cx, formatNumber } from "../../lib/utils.ts";
+import { TopPagesSorting } from "../../lib/types/top-pages.ts";
+import useParams from "../../lib/hooks/use-params.ts";
+import useDomain from "../../lib/hooks/use-domain.ts";
 
 export default function TopPagesWidget() {
-  const { data, status, warning } = useTopPages()
-  const { domain } = useDomain()
+  const { data, status, warning } = useTopPages();
+  const { domain } = useDomain();
   const [sorting, setSorting] = useParams({
-    key: 'top_pages_sorting',
+    key: "top_pages_sorting",
     values: Object.values(TopPagesSorting),
-  })
+  });
   const chartData = useMemo(
     () =>
-      (data?.data ?? []).map(d => ({
+      (data?.data ?? []).map((d) => ({
         name: d.pathname,
         value: d[sorting],
         href: `https://${domain}${d.pathname}`,
       })),
-    [data?.data, domain, sorting]
-  )
+    [data?.data, domain, sorting],
+  );
 
   return (
     <Widget>
@@ -38,8 +38,8 @@ export default function TopPagesWidget() {
           </div>
           <div
             className={cx(
-              'col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5',
-              sorting === TopPagesSorting.Visitors && 'text-primary'
+              "col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5",
+              sorting === TopPagesSorting.Visitors && "text-primary",
             )}
             onClick={() => setSorting(TopPagesSorting.Visitors)}
           >
@@ -47,8 +47,8 @@ export default function TopPagesWidget() {
           </div>
           <div
             className={cx(
-              'col-span-1 row-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5',
-              sorting === TopPagesSorting.Pageviews && 'text-primary'
+              "col-span-1 row-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5",
+              sorting === TopPagesSorting.Pageviews && "text-primary",
             )}
             onClick={() => setSorting(TopPagesSorting.Pageviews)}
           >
@@ -56,7 +56,7 @@ export default function TopPagesWidget() {
           </div>
 
           <div className="col-span-3">
-            <BarList data={chartData} valueFormatter={_ => ''} />
+            <BarList data={chartData} valueFormatter={(_) => ""} />
           </div>
           <div className="flex flex-col col-span-1 row-span-4 gap-2">
             {(data?.data ?? []).map(({ pathname, visits }) => (
@@ -81,5 +81,5 @@ export default function TopPagesWidget() {
         </div>
       </Widget.Content>
     </Widget>
-  )
+  );
 }

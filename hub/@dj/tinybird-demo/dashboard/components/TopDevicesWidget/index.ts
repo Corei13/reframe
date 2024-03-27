@@ -1,1 +1,1 @@
-export { default } from './TopDevicesWidget'
+export { default } from "./TopDevicesWidget.tsx";

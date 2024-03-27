@@ -76,6 +76,18 @@ export const extractExports = (node: ts.Node): string[] => {
   return [];
 };
 
+// x -> () => x
+const lift = (node: ts.Expression) => {
+  return ts.factory.createArrowFunction(
+    undefined,
+    undefined,
+    [],
+    undefined,
+    undefined,
+    node,
+  );
+};
+
 export const runnable = createVisitorTransformer<{
   path: string;
   imports: string[];
@@ -106,7 +118,7 @@ export const runnable = createVisitorTransformer<{
                 ts.factory.createIdentifier(ctx.symbols.exports),
                 ts.factory.createStringLiteral("default"),
               ),
-              statement.expression,
+              lift(statement.expression),
             ),
           );
         }
@@ -133,9 +145,9 @@ export const runnable = createVisitorTransformer<{
                       element.name.text,
                     ),
                   ),
-                  ts.factory.createIdentifier(
+                  lift(ts.factory.createIdentifier(
                     element.propertyName?.text ?? element.name.text,
-                  ),
+                  )),
                 ),
               );
             });
@@ -164,9 +176,74 @@ export const runnable = createVisitorTransformer<{
                 ts.factory.createObjectLiteralExpression(
                   [
                     ts.factory.createSpreadAssignment(
-                      ts.factory.createElementAccessExpression(
-                        ts.factory.createIdentifier(ctx.symbols.imports),
-                        ts.factory.createStringLiteral(specifier),
+                      // Object.fromEntries(
+                      ts.factory.createCallExpression(
+                        ts.factory.createIdentifier("Object.fromEntries"),
+                        undefined,
+                        [
+                          ts.factory.createCallExpression(
+                            ts.factory.createPropertyAccessExpression(
+                              // Object.entries(
+                              ts.factory.createCallExpression(
+                                ts.factory.createIdentifier("Object.entries"),
+                                undefined,
+                                [
+                                  // imports[specifier]
+                                  ts.factory.createElementAccessExpression(
+                                    ts.factory.createIdentifier(
+                                      ctx.symbols.imports,
+                                    ),
+                                    ts.factory.createStringLiteral(specifier),
+                                  ),
+                                ],
+                              ),
+                              ts.factory.createIdentifier("map"),
+                            ),
+                            undefined,
+                            [
+                              ts.factory.createArrowFunction(
+                                undefined,
+                                undefined,
+                                [ts.factory.createParameterDeclaration(
+                                  undefined,
+                                  undefined,
+                                  // [name, value]
+                                  ts.factory.createArrayBindingPattern([
+                                    ts.factory.createBindingElement(
+                                      undefined,
+                                      undefined,
+                                      ts.factory.createIdentifier("name"),
+                                      undefined,
+                                    ),
+                                    ts.factory.createBindingElement(
+                                      undefined,
+                                      undefined,
+                                      ts.factory.createIdentifier("value"),
+                                      undefined,
+                                    ),
+                                  ]),
+                                )],
+                                undefined,
+                                undefined,
+                                // [name, () => value]
+                                ts.factory.createArrayLiteralExpression(
+                                  [
+                                    ts.factory.createIdentifier("name"),
+                                    ts.factory.createArrowFunction(
+                                      undefined,
+                                      undefined,
+                                      [],
+                                      undefined,
+                                      undefined,
+                                      ts.factory.createIdentifier("value"),
+                                    ),
+                                  ],
+                                  false,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
 
@@ -194,10 +271,10 @@ export const runnable = createVisitorTransformer<{
                     statement.exportClause.name.text,
                   ),
                 ),
-                ts.factory.createElementAccessExpression(
+                lift(ts.factory.createElementAccessExpression(
                   ts.factory.createIdentifier(ctx.symbols.imports),
                   ts.factory.createStringLiteral(specifier),
-                ),
+                )),
               ),
             );
           } else {
@@ -255,13 +332,13 @@ export const runnable = createVisitorTransformer<{
                         ts.factory.createIdentifier(ctx.symbols.exports),
                         ts.factory.createIdentifier("name"),
                       ),
-                      ts.factory.createElementAccessExpression(
+                      lift(ts.factory.createElementAccessExpression(
                         ts.factory.createElementAccessExpression(
                           ts.factory.createIdentifier(ctx.symbols.imports),
                           ts.factory.createStringLiteral(specifier),
                         ),
                         ts.factory.createIdentifier("property"),
-                      ),
+                      )),
                     ),
                   ),
                 ],
@@ -442,7 +519,7 @@ export const runnable = createVisitorTransformer<{
                         ts.factory.createIdentifier(ctx.symbols.exports),
                         ts.factory.createIdentifier("Symbol.toStringTag"),
                       ),
-                      ts.factory.createStringLiteral("Module"),
+                      lift(ts.factory.createStringLiteral("Module")),
                     ),
                   ),
                   ...importStatementParts.map(([specifier, bindings]) => {
@@ -464,10 +541,75 @@ export const runnable = createVisitorTransformer<{
                       ),
                     );
                   }),
+
                   ...statements,
 
                   ts.factory.createReturnStatement(
-                    ts.factory.createIdentifier(ctx.symbols.exports),
+                    // Object.fromEntries(
+                    ts.factory.createCallExpression(
+                      ts.factory.createIdentifier("Object.fromEntries"),
+                      undefined,
+                      [
+                        // Object.entries(exports).map(
+                        ts.factory.createCallExpression(
+                          ts.factory.createPropertyAccessExpression(
+                            ts.factory.createCallExpression(
+                              ts.factory.createIdentifier("Object.entries"),
+                              undefined,
+                              [
+                                ts.factory.createIdentifier(
+                                  ctx.symbols.exports,
+                                ),
+                              ],
+                            ),
+                            ts.factory.createIdentifier("map"),
+                          ),
+                          undefined,
+                          [
+                            // ([name, value]) => [name, value()]
+                            ts.factory.createArrowFunction(
+                              undefined,
+                              undefined,
+                              [
+                                ts.factory.createParameterDeclaration(
+                                  undefined,
+                                  undefined,
+                                  ts.factory.createArrayBindingPattern(
+                                    [
+                                      ts.factory.createBindingElement(
+                                        undefined,
+                                        undefined,
+                                        ts.factory.createIdentifier("name"),
+                                        undefined,
+                                      ),
+                                      ts.factory.createBindingElement(
+                                        undefined,
+                                        undefined,
+                                        ts.factory.createIdentifier("value"),
+                                        undefined,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              undefined,
+                              undefined,
+                              ts.factory.createArrayLiteralExpression(
+                                [
+                                  ts.factory.createIdentifier("name"),
+                                  ts.factory.createCallExpression(
+                                    ts.factory.createIdentifier("value"),
+                                    undefined,
+                                    [],
+                                  ),
+                                ],
+                                false,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
                 true,
@@ -536,7 +678,7 @@ export const runnable = createVisitorTransformer<{
                 ts.factory.createIdentifier(ctx.symbols.exports),
                 ts.factory.createStringLiteral(name),
               ),
-              ts.factory.createIdentifier(name),
+              lift(ts.factory.createIdentifier(name)),
             ),
           );
         }),
@@ -579,7 +721,7 @@ export const runnable = createVisitorTransformer<{
                 exportName,
               ),
             ),
-            name,
+            lift(name),
           ),
         ),
       ];
@@ -617,7 +759,7 @@ export const runnable = createVisitorTransformer<{
               ts.factory.createIdentifier(ctx.symbols.exports),
               ts.factory.createStringLiteral(exportName),
             ),
-            name,
+            lift(name),
           ),
         ),
       ];

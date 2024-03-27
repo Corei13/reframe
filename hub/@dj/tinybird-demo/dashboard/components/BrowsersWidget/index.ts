@@ -1,1 +1,1 @@
-export { default } from './BrowsersWidget'
+export { default } from "./BrowsersWidget.tsx";

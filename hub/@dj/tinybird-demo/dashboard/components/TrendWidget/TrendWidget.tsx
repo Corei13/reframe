@@ -1,19 +1,19 @@
-import { BarChart } from '@tremor/react'
-import Widget from '../Widget'
-import useTrend from '../../lib/hooks/use-trend'
-import { useMemo } from 'react'
-import moment from 'moment'
+import { BarChart } from "npm:@tremor/react@2.0.2";
+import Widget from "../Widget.tsx";
+import useTrend from "../../lib/hooks/use-trend.ts";
+import { useMemo } from "npm:react@canary";
+import moment from "npm:moment";
 
 export default function TrendWidget() {
-  const { data, status, warning } = useTrend()
+  const { data, status, warning } = useTrend();
   const chartData = useMemo(
     () =>
-      (data?.data ?? []).map(d => ({
-        Date: moment(d.t).format('HH:mm'),
-        'Number of visits': d.visits,
+      (data?.data ?? []).map((d) => ({
+        Date: moment(d.t).format("HH:mm"),
+        "Number of visits": d.visits,
       })),
-    [data]
-  )
+    [data],
+  );
 
   return (
     <Widget>
@@ -32,8 +32,8 @@ export default function TrendWidget() {
         <BarChart
           data={chartData}
           index="Date"
-          categories={['Number of visits']}
-          colors={['blue']}
+          categories={["Number of visits"]}
+          colors={["blue"]}
           className="h-32"
           showXAxis={false}
           showYAxis={false}
@@ -42,5 +42,5 @@ export default function TrendWidget() {
         />
       </Widget.Content>
     </Widget>
-  )
+  );
 }

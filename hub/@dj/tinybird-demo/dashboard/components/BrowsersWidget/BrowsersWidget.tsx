@@ -1,12 +1,12 @@
-import { Fragment } from 'react'
-import Widget from '../Widget'
-import useBrowsers from '../../lib/hooks/use-top-browsers'
-import { formatNumber } from '../../lib/utils'
-import { DonutChart } from '@tremor/react'
-import { tremorPieChartColors } from '../../styles/theme/tremor-colors'
+import { Fragment } from "npm:react@canary";
+import Widget from "../Widget.tsx";
+import useBrowsers from "../../lib/hooks/use-top-browsers.ts";
+import { formatNumber } from "../../lib/utils.ts";
+import { DonutChart } from "npm:@tremor/react@2.0.2";
+import { tremorPieChartColors } from "../../styles/theme/tremor-colors.ts";
 
 export default function BrowsersWidget() {
-  const { data, status, warning } = useBrowsers()
+  const { data, status, warning } = useBrowsers();
 
   return (
     <Widget>
@@ -55,5 +55,5 @@ export default function BrowsersWidget() {
         </div>
       </Widget.Content>
     </Widget>
-  )
+  );
 }

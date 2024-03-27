@@ -1,40 +1,40 @@
-import { Card, Title } from '@tremor/react'
-import { ReactNode } from 'react'
-import { QueryStatus } from '../lib/types/api'
-import { cx } from '../lib/utils'
-import Loader from './Loader'
+import { Card, Title } from "npm:@tremor/react@2.0.2";
+import { ReactNode } from "npm:react@canary";
+import { QueryStatus } from "../lib/types/api.ts";
+import { cx } from "../lib/utils.ts";
+import Loader from "./Loader.tsx";
 
 type WidgetProps = {
-  children?: ReactNode
-}
+  children?: ReactNode;
+};
 
 function Widget({ children }: WidgetProps) {
   return (
     <section role="region" className="h-full">
       <Card className="h-full">{children}</Card>
     </section>
-  )
+  );
 }
 
 type WidgetTitleProps = {
-  children?: ReactNode
-  isVisuallyHidden?: boolean
-}
+  children?: ReactNode;
+  isVisuallyHidden?: boolean;
+};
 
 function WidgetTitle({ children, isVisuallyHidden }: WidgetTitleProps) {
   return (
-    <div className={isVisuallyHidden ? 'sr-only' : ''}>
+    <div className={isVisuallyHidden ? "sr-only" : ""}>
       <Title>{children}</Title>
     </div>
-  )
+  );
 }
 
 function WidgetLoading({
   loaderSize,
   height,
 }: {
-  loaderSize?: number
-  height?: number
+  loaderSize?: number;
+  height?: number;
 }) {
   return (
     <div
@@ -46,17 +46,17 @@ function WidgetLoading({
     >
       <Loader size={loaderSize} />
     </div>
-  )
+  );
 }
 
 type WidgetContentProps = {
-  className?: string
-  children?: ReactNode
-  status?: QueryStatus
-  loaderSize?: number
-  warning?: string | null
-  noData?: boolean
-}
+  className?: string;
+  children?: ReactNode;
+  status?: QueryStatus;
+  loaderSize?: number;
+  warning?: string | null;
+  noData?: boolean;
+};
 
 function WidgetContent({
   children,
@@ -67,18 +67,16 @@ function WidgetContent({
   noData,
 }: WidgetContentProps) {
   return (
-    <div className={cx(className, 'mt-4 h-full')}>
-      {status === 'loading' ? (
-        <WidgetLoading loaderSize={loaderSize} />
-      ) : status === 'error' ? (
-        <WidgetWarning>{warning}</WidgetWarning>
-      ) : status === 'success' && noData ? (
-        <WidgetNoData />
-      ) : (
-        children
-      )}
+    <div className={cx(className, "mt-4 h-full")}>
+      {status === "loading"
+        ? <WidgetLoading loaderSize={loaderSize} />
+        : status === "error"
+        ? <WidgetWarning>{warning}</WidgetWarning>
+        : status === "success" && noData
+        ? <WidgetNoData />
+        : children}
     </div>
-  )
+  );
 }
 
 function WidgetWarning({ children }: { children: ReactNode }) {
@@ -110,7 +108,7 @@ function WidgetWarning({ children }: { children: ReactNode }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function WidgetNoData() {
@@ -118,7 +116,7 @@ function WidgetNoData() {
     <div className="absolute inset-0 place-content-center grid text-neutral-64">
       No data
     </div>
-  )
+  );
 }
 
 export default Object.assign(Widget, {
@@ -127,4 +125,4 @@ export default Object.assign(Widget, {
   Warning: WidgetWarning,
   NoData: WidgetNoData,
   Loading: WidgetLoading,
-})
+});

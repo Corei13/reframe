@@ -34,7 +34,7 @@ export type BodyPromise<
     ): BodyPromise<T>;
   };
 
-const createBody = <T>(
+export const createBody = <T>(
   _underlying: BodyInit | null,
   headers: Headers,
 ): Body => {

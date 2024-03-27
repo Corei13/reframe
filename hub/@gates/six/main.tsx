@@ -15,9 +15,6 @@ const server = Deno.serve(
     const cache = new Set<string>();
     const requestId = crypto.randomUUID();
     const requestRuntime = Runtime
-      // .extend(() => ({
-      //   module: createModuleCache(),
-      // }))
       .extend((factory) => ({
         requestId,
         request,

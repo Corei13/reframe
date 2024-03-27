@@ -1,32 +1,37 @@
-import { FormEvent, useState } from 'react'
-import { useRouter } from 'next/router'
-import { SelectBox, SelectBoxItem, TextInput, Button } from '@tremor/react'
+import { FormEvent, useState } from "npm:react@canary";
+import { useRouter } from "next:router";
+import {
+  Button,
+  SelectBox,
+  SelectBoxItem,
+  TextInput,
+} from "npm:@tremor/react@2.0.2";
 
-import { HostType } from '../../lib/types/credentials'
-import { OptionType } from '../../lib/types/options'
+import { HostType } from "../../lib/types/credentials.ts";
+import { OptionType } from "../../lib/types/options.ts";
 
 const hostOptions: OptionType<HostType>[] = [
   { text: HostType.Eu, value: HostType.Eu },
   { text: HostType.Us, value: HostType.Us },
-  { text: 'Other', value: HostType.Other },
-]
+  { text: "Other", value: HostType.Other },
+];
 
 export default function CredentialsForm() {
-  const router = useRouter()
-  const [hostType, setHostType] = useState<HostType>(hostOptions[0].value)
+  const router = useRouter();
+  const [hostType, setHostType] = useState<HostType>(hostOptions[0].value);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const form = event.currentTarget
-    const formData = new FormData(form)
-    const credentials = Object.fromEntries(formData) as Record<string, string>
-    const { token, hostName } = credentials
-    if (!token || (hostType === HostType.Other && !hostName)) return
-    const host = hostType === HostType.Other ? hostName : hostType
-    const params = new URLSearchParams({ token, host })
-    router.push({ pathname: router.pathname, search: params.toString() })
-  }
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const credentials = Object.fromEntries(formData) as Record<string, string>;
+    const { token, hostName } = credentials;
+    if (!token || (hostType === HostType.Other && !hostName)) return;
+    const host = hostType === HostType.Other ? hostName : hostType;
+    const params = new URLSearchParams({ token, host });
+    router.push({ pathname: router.pathname, search: params.toString() });
+  };
 
   return (
     <form
@@ -55,7 +60,7 @@ export default function CredentialsForm() {
             </label>
             <SelectBox
               value={hostType}
-              onValueChange={value => setHostType(value as HostType)}
+              onValueChange={(value) => setHostType(value as HostType)}
             >
               {hostOptions.map(({ text, value }) => (
                 <SelectBoxItem key={value} text={text} value={value} />
@@ -80,5 +85,5 @@ export default function CredentialsForm() {
         </div>
       </div>
     </form>
-  )
+  );
 }

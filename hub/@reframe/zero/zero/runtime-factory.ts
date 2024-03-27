@@ -1,4 +1,4 @@
-import type { Module } from "../defs.ts";
+import type { Module, Path } from "../defs.ts";
 
 export type Runtime<T = unknown> = {
   factory: RuntimeFactory<T>;
@@ -39,10 +39,9 @@ export const createRuntimeFactory = <T>(
   return factory;
 };
 
-export const createBaseRuntime = createRuntimeFactory<unknown>(() => ({}));
+export const createZeroRuntime = () =>
+  createRuntimeFactory<unknown>(() => ({}))();
 
 export type Runnable<
   M extends Record<string, unknown> = Record<string, unknown>,
 > = <T = unknown>(runtime: T) => Promise<Module<M>>;
-
-export default createBaseRuntime();

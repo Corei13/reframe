@@ -1,36 +1,39 @@
-import { queryPipe } from '../api'
-import { TopSource, TopSources } from '../types/top-sources'
-import useDateFilter from './use-date-filter'
-import useQuery from './use-query'
+import { queryPipe } from "../api.ts";
+import { TopSource, TopSources } from "../types/top-sources.ts";
+import useDateFilter from "./use-date-filter.ts";
+import useQuery from "./use-query.ts";
 
 async function getTopSources(
   date_from?: string,
-  date_to?: string
+  date_to?: string,
 ): Promise<TopSources> {
-  const { data: queryData } = await queryPipe<TopSource>('top_sources', {
+  const { data: queryData } = await queryPipe<TopSource>("top_sources", {
     limit: 8,
     date_from,
     date_to,
-  })
+  });
 
   const data: TopSource[] = [...queryData]
     .sort((a, b) => b.visits - a.visits)
     .map(({ referrer, visits }) => ({
-      referrer: referrer || 'Direct',
+      referrer: referrer || "Direct",
       href: referrer ? `https://${referrer}` : undefined,
       visits,
-    }))
-  const refs = data.map(({ referrer }) => referrer)
-  const visits = data.map(({ visits }) => visits)
+    }));
+  const refs = data.map(({ referrer }) => referrer);
+  const visits = data.map(({ visits }) => visits);
 
   return {
     data,
     refs,
     visits,
-  }
+  };
 }
 
 export default function useTopSources() {
-  const { startDate, endDate } = useDateFilter()
-  return useQuery([startDate, endDate, 'topSources'], getTopSources)
+  const { startDate, endDate } = useDateFilter();
+  return useQuery(
+    [startDate, endDate, "topSources"],
+    (args) => getTopSources(args[0], args[1]),
+  );
 }

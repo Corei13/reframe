@@ -31,6 +31,7 @@ export const runnable = (path: string, content: string) => {
   const exports = {
     names: [] as string[],
     namespaces: [] as string[],
+    statements: [],
   };
 
   const transpiler = createTranspiler({

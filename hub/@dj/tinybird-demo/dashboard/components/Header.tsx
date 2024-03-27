@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import CurrentVisitors from './CurrentVisitors'
-import DateFilter from './DateFilter'
-import useDomain from '../lib/hooks/use-domain'
+import CurrentVisitors from "./CurrentVisitors.tsx";
+import DateFilter from "./DateFilter.tsx";
+import useDomain from "../lib/hooks/use-domain.ts";
 
 export default function Header() {
-  const { domain, logo, handleLogoError } = useDomain()
+  const { domain, logo, handleLogoError } = useDomain();
 
   return (
     <header className="flex justify-between flex-col lg:flex-row gap-6">
@@ -24,5 +24,5 @@ export default function Header() {
       </div>
       <DateFilter />
     </header>
-  )
+  );
 }

@@ -1,5 +1,8 @@
 import { Module, Path } from "./defs.ts";
 
+// todo: we should have two separate cache for runnables and modules
+// we can compute the runnables ahead of time by analyzing the graph
+// and additionally, we can also compute pure modules (runnables that don't depend on runtime) ahead of time
 export const createModuleCache = () => {
   const cache = new Map<Path, {
     parent?: Path;

@@ -1,12 +1,12 @@
-import { Fragment } from 'react'
-import { DonutChart } from '@tremor/react'
-import Widget from '../Widget'
-import useTopDevices from '../../lib/hooks/use-top-devices'
-import { formatNumber } from '../../lib/utils'
-import { tremorPieChartColors } from '../../styles/theme/tremor-colors'
+import { Fragment } from "npm:react@canary";
+import { DonutChart } from "npm:@tremor/react@2.0.2";
+import Widget from "../Widget.tsx";
+import useTopDevices from "../../lib/hooks/use-top-devices.ts";
+import { formatNumber } from "../../lib/utils.ts";
+import { tremorPieChartColors } from "../../styles/theme/tremor-colors.ts";
 
 export default function TopDevicesWidget() {
-  const { data, warning, status } = useTopDevices()
+  const { data, warning, status } = useTopDevices();
 
   return (
     <Widget>
@@ -54,5 +54,5 @@ export default function TopDevicesWidget() {
         </div>
       </Widget.Content>
     </Widget>
-  )
+  );
 }

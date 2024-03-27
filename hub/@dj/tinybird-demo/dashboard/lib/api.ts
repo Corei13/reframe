@@ -1,64 +1,65 @@
-import fetch from 'cross-fetch'
 import {
   ClientResponse,
   PipeParams,
+  QueryError,
   QueryPipe,
   QuerySQL,
-  QueryError,
-} from './types/api'
-import config from './config'
+} from "./types/api.ts";
+import config from "./config.ts";
 
 export function getConfig() {
-  const params = new URLSearchParams(window.location.search)
-  const token = config.authToken ?? params.get('token')
-  const host = config.host ?? params.get('host')
+  const params = new URLSearchParams(window.location.search);
+  const token = config.authToken ?? params.get("token");
+  const host = config.host ?? params.get("host");
   return {
     token,
     host,
-  }
+  };
 }
 
 export async function client<T>(
   path: string,
-  params?: RequestInit
+  params?: RequestInit,
 ): Promise<ClientResponse<T>> {
-  const { host, token } = getConfig()
+  const { host, token } = getConfig();
 
-  if (!token || !host) throw new Error('Configuration not found')
+  if (!token || !host) throw new Error("Configuration not found");
 
-  const apiUrl =
-    {
-      'https://ui.tinybird.co': 'https://api.tinybird.co',
-      'https://ui.us-east.tinybird.co': 'https://api.us-east.tinybird.co',
-    }[host] ?? host
+  const apiUrl = {
+    "https://ui.tinybird.co": "https://api.tinybird.co",
+    "https://ui.us-east.tinybird.co": "https://api.us-east.tinybird.co",
+  }[host] ?? host;
 
   const response = await fetch(`${apiUrl}/v0${path}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
     ...params,
-  })
-  const data = (await response.json()) as ClientResponse<T>
+  });
+  const data = (await response.json()) as ClientResponse<T>;
 
   if (!response.ok) {
-    throw new QueryError(data?.error ?? 'Something went wrong', response.status)
+    throw new QueryError(
+      data?.error ?? "Something went wrong",
+      response.status,
+    );
   }
-  return data
+  return data;
 }
 
 export function queryPipe<T>(
   name: string,
-  params: Partial<PipeParams<T>> = {}
+  params: Partial<PipeParams<T>> = {},
 ): Promise<QueryPipe<T>> {
-  const searchParams = new URLSearchParams()
+  const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (!value) return
-    searchParams.set(key, value)
-  })
+    if (!value) return;
+    searchParams.set(key, value);
+  });
 
-  return client(`/pipes/${name}.json?${searchParams}`)
+  return client(`/pipes/${name}.json?${searchParams}`);
 }
 
 export function querySQL<T>(sql: string): Promise<QuerySQL<T>> {
-  return client(`/sql?q=${sql}`)
+  return client(`/sql?q=${sql}`);
 }

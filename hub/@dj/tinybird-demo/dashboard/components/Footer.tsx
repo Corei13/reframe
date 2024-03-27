@@ -1,12 +1,12 @@
-import useAuth from '../lib/hooks/use-auth'
+import useAuth from "../lib/hooks/use-auth.ts";
 
 export default function Footer() {
-  const { token } = useAuth()
+  const { token } = useAuth();
 
   return (
     <footer className="w-full text-center text-sm flex flex-col gap-2">
       <p>
-        Built with speed and privacy in mind using{' '}
+        Built with speed and privacy in mind using{" "}
         <a
           href="https://tinybird.co"
           target="_blank"
@@ -27,5 +27,5 @@ export default function Footer() {
         </a>
       )}
     </footer>
-  )
+  );
 }

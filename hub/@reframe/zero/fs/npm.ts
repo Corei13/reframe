@@ -1,12 +1,22 @@
 import { createFs } from "./create.ts";
 
-export const createNpmFs = (cdn = "https://esm.sh") =>
+export const createNpmFs = ({
+  cdn = "https://esm.sh",
+  ...params
+}: {
+  cdn?: string;
+  target?: string;
+  external?: string;
+  conditions?: string;
+}) =>
   createFs((ctx) =>
     ctx
       .read(async (path) => {
         const url = new URL(path, cdn);
-        url.searchParams.set("target", "denonext");
-        url.searchParams.set("external", "react,react-dom");
+
+        for (const [key, value] of Object.entries(params)) {
+          url.searchParams.set(key, value);
+        }
 
         const response = await fetch(url);
 

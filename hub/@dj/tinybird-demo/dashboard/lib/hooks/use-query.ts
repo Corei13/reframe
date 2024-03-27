@@ -1,42 +1,42 @@
-import { useState } from 'react'
-import useSWR, { Key, Fetcher } from 'swr'
-import { QueryError, QueryResponse } from '../types/api'
+import { useState } from "npm:react@canary";
+import useSWR, { Fetcher, Key } from "npm:swr";
+import { QueryError, QueryResponse } from "../types/api.ts";
 
 export default function useQuery<T, K extends Key>(
   key: K,
   fetcher: Fetcher<T, K>,
   config?: {
-    onSuccess?: (data: T) => void
-    onError?: (error: QueryError) => void
-  }
+    onSuccess?: (data: T) => void;
+    onError?: (error: QueryError) => void;
+  },
 ): QueryResponse<T> {
-  const [warning, setWarning] = useState<QueryError | null>(null)
+  const [warning, setWarning] = useState<QueryError | null>(null);
 
   const handleError = (error: QueryError) => {
-    config?.onError?.(error)
-    if (error.status !== 404 && error.status !== 400) return
-    setWarning(error)
-  }
+    config?.onError?.(error);
+    if (error.status !== 404 && error.status !== 400) return;
+    setWarning(error);
+  };
 
   const handleSuccess = (data: T) => {
-    config?.onSuccess?.(data)
-    setWarning(null)
-  }
+    config?.onSuccess?.(data);
+    setWarning(null);
+  };
 
   const query = useSWR(key, fetcher, {
     onError: handleError,
     onSuccess: handleSuccess,
-  })
+  });
 
-  const { data, error, isValidating } = query
+  const { data, error, isValidating } = query;
 
   const getStatus = () => {
-    if (!data && !error) return 'loading'
-    if (isValidating) return 'updating'
-    if (error) return 'error'
-    if (!!data) return 'success'
-    return 'idle'
-  }
+    if (!data && !error) return "loading";
+    if (isValidating) return "updating";
+    if (error) return "error";
+    if (!!data) return "success";
+    return "idle";
+  };
 
-  return { ...query, warning, status: getStatus() }
+  return { ...query, warning, status: getStatus() };
 }

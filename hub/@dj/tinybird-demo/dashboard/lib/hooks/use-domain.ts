@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import useSWR from 'swr'
-import { querySQL } from '../api'
-import { DomainData, DomainQueryData } from '../types/domain'
+import { useState } from "npm:react@canary";
+import useSWR from "npm:swr";
+import { querySQL } from "../api.ts";
+import { DomainData, DomainQueryData } from "../types/domain.ts";
 
 async function getDomain(): Promise<DomainData> {
   // Guess the instrumented domain, and exclude other domains like development or staging.
@@ -24,34 +24,32 @@ async function getDomain(): Promise<DomainData> {
       limit 1
     ) as some_domain
     select coalesce(top_domain, some_domain) as domain format JSON
-  `)
-  const domain = data[0]['domain'];
-  const logo = domain
-    ? `https://${domain}/favicon.ico`
-    : FALLBACK_LOGO
+  `);
+  const domain = data[0]["domain"];
+  const logo = domain ? `https://${domain}/favicon.ico` : FALLBACK_LOGO;
 
   return {
     domain,
     logo,
-  }
+  };
 }
 
-const FALLBACK_LOGO = '/fallback-logo.png'
+const FALLBACK_LOGO = "/fallback-logo.png";
 
 export default function useDomain() {
-  const [logo, setLogo] = useState(FALLBACK_LOGO)
+  const [logo, setLogo] = useState(FALLBACK_LOGO);
 
-  const { data } = useSWR('domain', getDomain, {
+  const { data } = useSWR("domain", getDomain, {
     onSuccess: ({ logo }) => setLogo(logo),
-  })
+  });
 
   const handleLogoError = () => {
-    setLogo(FALLBACK_LOGO)
-  }
+    setLogo(FALLBACK_LOGO);
+  };
 
   return {
-    domain: data?.domain ?? 'domain.com',
+    domain: data?.domain ?? "domain.com",
     logo,
     handleLogoError,
-  }
+  };
 }

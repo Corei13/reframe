@@ -1,25 +1,25 @@
-import { BarList } from '@tremor/react'
-import { TopLocationsSorting } from '../../lib/types/top-locations'
-import Widget from '../Widget'
-import { cx } from '../../lib/utils'
-import { useMemo } from 'react'
-import useParams from '../../lib/hooks/use-params'
-import useTopLocations from '../../lib/hooks/use-top-locations'
+import { BarList } from "npm:@tremor/react@2.0.2";
+import { TopLocationsSorting } from "../../lib/types/top-locations.ts";
+import Widget from "../Widget.tsx";
+import { cx } from "../../lib/utils.ts";
+import { useMemo } from "npm:react@canary";
+import useParams from "../../lib/hooks/use-params.ts";
+import useTopLocations from "../../lib/hooks/use-top-locations.ts";
 
 export default function TopLocationsWidget() {
-  const { data, status, warning } = useTopLocations()
+  const { data, status, warning } = useTopLocations();
   const [sorting, setSorting] = useParams({
-    key: 'top_locations_sorting',
+    key: "top_locations_sorting",
     values: Object.values(TopLocationsSorting),
-  })
+  });
   const chartData = useMemo(
     () =>
-      (data?.data ?? []).map(d => ({
+      (data?.data ?? []).map((d) => ({
         name: d.location,
         value: d[sorting],
       })),
-    [data?.data, sorting]
-  )
+    [data?.data, sorting],
+  );
 
   return (
     <Widget>
@@ -35,8 +35,8 @@ export default function TopLocationsWidget() {
           </div>
           <div
             className={cx(
-              'col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5',
-              sorting === TopLocationsSorting.Visitors && 'text-primary'
+              "col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5",
+              sorting === TopLocationsSorting.Visitors && "text-primary",
             )}
             onClick={() => setSorting(TopLocationsSorting.Visitors)}
           >
@@ -44,8 +44,8 @@ export default function TopLocationsWidget() {
           </div>
           <div
             className={cx(
-              'col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5',
-              sorting === TopLocationsSorting.Pageviews && 'text-primary'
+              "col-span-1 font-semibold text-xs text-right tracking-widest uppercase cursor-pointer h-5",
+              sorting === TopLocationsSorting.Pageviews && "text-primary",
             )}
             onClick={() => setSorting(TopLocationsSorting.Pageviews)}
           >
@@ -53,7 +53,7 @@ export default function TopLocationsWidget() {
           </div>
 
           <div className="col-span-3">
-            <BarList data={chartData} valueFormatter={_ => ''} />
+            <BarList data={chartData} valueFormatter={(_) => ""} />
           </div>
           <div className="flex flex-col col-span-1 row-span-4 gap-2">
             {(data?.data ?? []).map(({ location, visits }) => (
@@ -78,5 +78,5 @@ export default function TopLocationsWidget() {
         </div>
       </Widget.Content>
     </Widget>
-  )
+  );
 }
